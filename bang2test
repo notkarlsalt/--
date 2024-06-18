@@ -1,0 +1,105 @@
+local Orion = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
+
+local Window = Orion:MakeWindow({
+    Name = "Sex bot",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "OrionTest"
+})
+
+local Tab = Window:MakeTab({
+    Name = "Sex bot BETA",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+local animationTrack = nil
+local animationConnection = nil
+local floatConnection = nil
+
+local function findPlayer(name)
+    local lowerName = string.lower(name)
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if string.find(string.lower(player.Name), lowerName) or string.find(string.lower(player.DisplayName), lowerName) then
+            return player
+        end
+    end
+    return nil
+end
+
+local function bangAnimation2(player)
+    local localPlayer = game.Players.LocalPlayer
+    local localCharacter = localPlayer.Character
+    local localHumanoid = localCharacter:FindFirstChildOfClass("Humanoid")
+    if localHumanoid then
+        local animation = Instance.new("Animation")
+        animation.AnimationId = localHumanoid.RigType == Enum.HumanoidRigType.R15 and "rbxassetid://5918726674" or "rbxassetid://148840371"
+        animationTrack = localHumanoid:LoadAnimation(animation)
+        animationTrack:Play()
+        animationTrack:AdjustSpeed(10)
+
+        animationConnection = animationTrack.KeyframeReached:Connect(function(keyframeName)
+            if keyframeName == "End" then
+                local targetHead = player.Character:FindFirstChild("Head")
+                if targetHead then
+                    local torsoOffset = localCharacter:FindFirstChild("Torso") or localCharacter:FindFirstChild("UpperTorso")
+                    if torsoOffset then
+                        local offset = CFrame.new(0, targetHead.Size.Y - torsoOffset.Size.Y + 1, -1) * CFrame.Angles(0, math.pi, 0)
+                        localCharacter.HumanoidRootPart.CFrame = targetHead.CFrame * offset
+                    end
+                end
+            end
+        end)
+
+        animationConnection = localHumanoid.Died:Connect(function()
+            stopAnimation2()
+        end)
+
+        floatConnection = game:GetService("RunService").Stepped:Connect(function()
+            localCharacter.HumanoidRootPart.Anchored = true
+            localCharacter.HumanoidRootPart.CanCollide = false
+        end)
+    end
+end
+
+local function stopAnimation2()
+    if animationTrack then
+        animationTrack:Stop()
+        animationTrack = nil
+    end
+    if animationConnection then
+        animationConnection:Disconnect()
+        animationConnection = nil
+    end
+    if floatConnection then
+        floatConnection:Disconnect()
+        floatConnection = nil
+        local localPlayer = game.Players.LocalPlayer
+        local localCharacter = localPlayer.Character
+        if localCharacter then
+            localCharacter.HumanoidRootPart.Anchored = false
+            localCharacter.HumanoidRootPart.CanCollide = true
+        end
+    end
+end
+
+local TextBox = Tab:AddTextbox({
+    Name = "Username/Display Name:",
+    Default = "",
+    TextDisappear = false,
+    Callback = function(Value)
+        print("Textbox value changed to: " .. Value)
+        stopAnimation2()
+        local player = findPlayer(Value)
+        if player then
+            bangAnimation2(player)
+        else
+            print("Player not found.")
+        end
+    end
+})
+
+local StopButton = Tab:AddButton({
+    Name = "script for unbang",
+    Callback = stopAnimation2
+})
