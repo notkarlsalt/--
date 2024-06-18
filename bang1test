@@ -1,0 +1,102 @@
+local Orion = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
+
+local Window = Orion:MakeWindow({
+    Name = "Sex bot",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "OrionTest"
+})
+
+-- Create a tab
+local Tab = Window:MakeTab({
+    Name = "Sex bot BETA",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+-- Variables to store the animation and connection
+local animationTrack = nil
+local animationConnection = nil
+local followConnection = nil
+
+-- Function to find a player based on the entered name
+local function findPlayer(name)
+    local lowerName = string.lower(name)
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if string.find(string.lower(player.Name), lowerName) or string.find(string.lower(player.DisplayName), lowerName) then
+            return player
+        end
+    end
+    return nil
+end
+
+-- Function to play the bang animation
+local function playBangAnimation(player)
+    local localPlayer = game.Players.LocalPlayer
+    local localCharacter = localPlayer.Character
+    local localHumanoid = localCharacter:FindFirstChildOfClass("Humanoid")
+
+    if localHumanoid then
+        -- Play the bang animation
+        local animation = Instance.new("Animation")
+        animation.AnimationId = localHumanoid.RigType == Enum.HumanoidRigType.R15 and "rbxassetid://5918726674" or "rbxassetid://148840371"
+        animationTrack = localHumanoid:LoadAnimation(animation)
+        animationTrack:Play()
+        animationTrack:AdjustSpeed(10)
+
+        -- Disconnect the animation when the local player dies
+        animationConnection = localHumanoid.Died:Connect(function()
+            stopAnimation()
+        end)
+
+        -- Follow the target player's character
+        followConnection = game:GetService("RunService").Stepped:Connect(function()
+            if localCharacter and player.Character then
+                localCharacter.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame
+            end
+        end)
+    end
+end
+
+-- Function to stop the animation and following
+local function stopAnimation()
+    if animationTrack then
+        animationTrack:Stop()
+        animationTrack = nil
+    end
+    if animationConnection then
+        animationConnection:Disconnect()
+        animationConnection = nil
+    end
+    if followConnection then
+        followConnection:Disconnect()
+        followConnection = nil
+    end
+end
+
+-- Add a textbox for entering the player's name
+local TextBox = Tab:AddTextbox({
+    Name = "Username/Display Name:",
+    Default = "",
+    TextDisappear = false,
+    Callback = function(Value)
+        print("Textbox value changed to: " .. Value)
+
+        -- Stop the previous animation if it's running
+        stopAnimation()
+
+        -- Find the player based on the entered name
+        local player = findPlayer(Value)
+        if player then
+            playBangAnimation(player)
+        else
+            print("Player not found.")
+        end
+    end
+})
+
+-- Add a button to stop the animation and following
+local StopButton = Tab:AddButton({
+    Name = "script for unbang",
+    Callback = stopAnimation
+})
