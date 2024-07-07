@@ -1,27 +1,32 @@
 --OrionHub source for future me: https://raw.githubusercontent.com/shlexware/Orion/main/source
 
-local PlayerService = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TextChatService = game:GetService("TextChatService")
-
-local IsLegacy = (TextChatService.ChatVersion == Enum.ChatVersion.LegacyChatService)
-local ChatRemote = ReplicatedStorage:FindFirstChild("SayMessageRequest", true)
-local Channel = not IsLegacy and TextChatService.TextChannels.RBXGeneral
+local TCS = game:GetService("TextChatService")
+local RStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer.PlayerGui
+local isLegacy = TCS.ChatVersion == Enum.ChatVersion.LegacyChatService
+local ChatBar = CoreGui:FindFirstChild("TextBoxContainer", true) or PlayerGui:FindFirstChild("Chat"):FindFirstChild("ChatBar", true)
+ChatBar = ChatBar:FindFirstChild("TextBox") or ChatBar
 
 local Chat = function(Message)
-    if IsLegacy then
+    if isLegacy then
+        local ChatRemote = RStorage:FindFirstChild("SayMessageRequest", true)
         ChatRemote:FireServer(Message, "All")
     else
+        local Channel = TCS.TextChannels.RBXGeneral
         Channel:SendAsync(Message)
     end
 end
 
 local Fake = function(Message)
-    if IsLegacy then
-        PlayerService:Chat(Message)
+    if isLegacy then
+        Players:Chat(Message)
     else
-        Channel:SendAsync(("/e %s"):format(Message))
+        local Channel = TCS.TextChannels.RBXGeneral
+        -- Channel:SendAsync(("/e %s"):format(Message))
+        -- ^^^ its too annoying
     end
 end
 
@@ -39,76 +44,37 @@ end
 
 local ResetFilter = function()
     for i = 1, 10 do
-        local GUID = RNG(i)
-        local Filler = "i love asians so much"
+        local GUID = RNG(30) -- Increased length of random strings
+        local Filler = "real"
         local Reset = ("%s %s"):format(GUID, Filler)
         task.spawn(function()
             Fake(Reset)
         end)
     end
 end
-wait(0.1)
-Events = true -- Allow RemoteEvents (if true, blocks if false) --fucntion hook detect bypass (for events)
-Requests = false -- Allow RemoteFunctions (if true, blocks if false) --fucntion hook detect bypass (for Requests)
-local getinfo = getinfo or debug.getinfo
-local DEBUG = false
-local Hooked = {}
 
-local Detected, Kill
+local Connection = Instance.new("BindableFunction")
 
-setthreadidentity(2)
-
-for i, v in getgc(true) do
-    if typeof(v) == "table" then
-        local DetectFunc = rawget(v, "Detected")
-        local KillFunc = rawget(v, "Kill")
-    
-        if typeof(DetectFunc) == "function" and not Detected then
-            Detected = DetectFunc
-            
-            local Old; Old = hookfunction(Detected, function(Action, Info, NoCrash)
-                if Action ~= "_" then
-                    if DEBUG then
-                        warn("Adonis AntiCheat flagged\nMethod: {Action}\nInfo: {Info}")
-                    end
-                end
-                
-                return true
-            end)
-
-            table.insert(Hooked, Detected)
-        end
-
-        if rawget(v, "Variables") and rawget(v, "Process") and typeof(KillFunc) == "function" and not Kill then
-            Kill = KillFunc
-            local Old; Old = hookfunction(Kill, function(Info)
-                if DEBUG then
-                    warn("Adonis AntiCheat tried to kill (fallback): {Info}")
-                end
-            end)
-
-            table.insert(Hooked, Kill)
-        end
-    end
+for _, c in getconnections(ChatBar.FocusLost) do
+    c:Disconnect()
 end
 
-local Old; Old = hookfunction(getrenv().debug.info, newcclosure(function(...)
-    local LevelOrFunc, Info = ...
-
-    if Detected and LevelOrFunc == Detected then
-        if DEBUG then
-            warn("zins | adonis bypassed")
-        end
-
-        return coroutine.yield(coroutine.running())
+ChatBar.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        Connection:Invoke(ChatBar.Text)
+        ChatBar.Text = ""
     end
-    
-    return Old(...)
-end))
--- setthreadidentity(9)
-setthreadidentity(7)
-    wait(0.1)
+end)
 
+Connection.OnInvoke = function(Message)
+    -- Message = Gen(Message) -- Assuming 'Gen' function is not defined
+    Chat(Message)
+    ResetFilter()
+end
+
+wait()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/vqmpjayZ/More-Scripts/main/Adonis_Anti_Cheat_Bypass"))()
+    wait()
 repeat task.wait() until game:IsLoaded()
 
 local TextChatService = game:GetService("TextChatService")
@@ -118,12 +84,9 @@ if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
     game:GetService("Players").LocalPlayer:Kick("This game uses ModernChatService which Vadrifts does not support.")
     return
 end
-wait(0.1)
-
-loadstring(game:HttpGet('https://raw.githubusercontent.com/AnthonyIsntHere/anthonysrepository/main/scripts/AntiChatLogger.lua'))()
-
+wait()
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-local Window = OrionLib:MakeWindow({ Name = "vadrifts.byp |  V1.3.9", HidePremium = false, SaveConfig = save, ConfigFolder ="OrionTest", ScriptIntro = enabled, IntroText = "Vadrifts bypassing society" })
+local Window = OrionLib:MakeWindow({ Name = "vadrifts.byp |  V1.4.0", HidePremium = false, SaveConfig = save, ConfigFolder ="OrionTest", ScriptIntro = enabled, IntroText = "Vadrifts bypassing society" })
 
 local startTime = tick()
 
@@ -138,11 +101,12 @@ local Section = Tab:AddSection({
 })
 Tab:AddParagraph("Loading..", "Please wait")
 Tab:AddParagraph("Quick Tip!","If the script isn't loading, it could be due to your device or executor!")
+loadstring(game:HttpGet('https://raw.githubusercontent.com/AnthonyIsntHere/anthonysrepository/main/scripts/AntiChatLogger.lua'))()
 
 local function loadScript()
 
     local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-    local Window = OrionLib:MakeWindow({ Name = "vadrifts.byp |  V1.3.9", HidePremium = false, SaveConfig = save, ConfigFolder = "OrionTest", IntroEnabled = false })
+    local Window = OrionLib:MakeWindow({ Name = "vadrifts.byp |  V1.4.0", HidePremium = false, SaveConfig = save, ConfigFolder = "OrionTest", IntroEnabled = false })
 
     local endTime = tick()
     local loadTime = endTime - startTime
@@ -168,7 +132,7 @@ Tab:AddButton({
 })
 
 Tab:AddButton({
-    Name = "Discord | Click To Copy (TW: Small Server)",
+    Name = "Discord | Click To Copy",
     Callback = function()
 setclipboard("https://dsc.gg/vadriftz")
     end
@@ -277,16 +241,16 @@ local Section = Tab:AddSection({
     Name = "Credits"
 })
 
- Tab:AddLabel("B4krs - Development and bypassing.")
- Tab:AddLabel("Sauce_boss01 - Made some Bypasses")
- Tab:AddLabel("clickgameplay - Automatic chat bypasser")
- Tab:AddLabel("Anthony - Chat Logger")
- Tab:AddLabel("OG Vadrifts - Most bypass ideas")
- Tab:AddLabel("d34dly - Made some Bypasses")
- Tab:AddLabel("Dank6s - Script setup")
- Tab:AddLabel("N4 - Made some Bypasses")
- Tab:AddLabel("Tyler - Made some Bypasses")
- Tab:AddLabel("BANANAN. - Development.")
+ Tab:AddLabel("[+] Jay. - Development and Bypassing.")
+ Tab:AddLabel("[+] BANANAN. - Development.")
+ Tab:AddLabel("[+] Dank6s - Script setup")
+ Tab:AddLabel("[+] Anthony - Anti-Chat Logger")
+ Tab:AddLabel("[+] clickgameplay - Automatic chat bypasser concept")
+ Tab:AddLabel("[+] OG Vadrifts - Most bypass ideas")
+ Tab:AddLabel("[+] Sauce_boss01 - Made some Bypasses")
+ Tab:AddLabel("[+] d34dly - Made some Bypasses")
+ Tab:AddLabel("[+] N4 - Made some Bypasses")
+ Tab:AddLabel("[+] Tyler - Made some Bypasses")
 
 local Section = Tab:AddSection({
     Name = "More Vadrifts/V3rge Scripts"
@@ -301,8 +265,11 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/BakaPraselol/HH-loade
 
 Tab:AddParagraph("Creating more soon..","Making scripts actually work..")
 
+local enabled = false
+local connection
+
 local Tab = Window:MakeTab({
-    Name = "Bypassed Words",
+    Name = "Words",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
@@ -314,79 +281,14 @@ local Section = Tab:AddSection({
 
 Tab:AddParagraph("Recommended Games"," Rate My Avatar                                                 Public Bathroom Simlator                                                               White room                                                        Natrual Disaster Survival                                                        Ragdoll Engine                                                 Spray Paint!")
 
-  Tab:AddButton({
-    Name = "Automatic Chat Bypasser",
-    Callback = function()
-game.StarterGui:SetCore("SendNotification", {Title="Activated"; Text="Try saying a swear in chat!"; Duration=5;})
-print(string.format("vdr.ACB: The Automatic Chat Bypasses has every bypass from the script with some extra ones, for example:"))
-print(string.format("wife, suck, kill, yourself, fuck(sometimes works).. And more!"))
 
-repeat task.wait() until game:IsLoaded()
-loadstring(game:HttpGet('https://raw.githubusercontent.com/AnthonyIsntHere/anthonysrepository/main/scripts/AntiChatLogger.lua'))()
-wait(0.1)
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local DefaultChatSystemChatEvents = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents")
-local SayMessageRequest = DefaultChatSystemChatEvents:WaitForChild("SayMessageRequest")
+local enabled = false
+local connection
 
-local function ResetFilter()
-local PlayerService = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TextChatService = game:GetService("TextChatService")
+local function startScript()
+    local chatService, players = game:GetService("Chat"), game:GetService("Players")
 
-local IsLegacy = (TextChatService.ChatVersion == Enum.ChatVersion.LegacyChatService)
-local ChatRemote = ReplicatedStorage:FindFirstChild("SayMessageRequest", true)
-local Channel = not IsLegacy and TextChatService.TextChannels.RBXGeneral
-
-local Chat = function(Message)
-    if IsLegacy then
-        ChatRemote:FireServer(Message, "All")
-    else
-        Channel:SendAsync(Message)
-    end
-end
-
-local Fake = function(Message)
-    if IsLegacy then
-        PlayerService:Chat(Message)
-    else
-        Channel:SendAsync(("/e %s"):format(Message))
-    end
-end
-
-local chars = {}
-for i=97,122 do chars[#chars+1]=string.char(i) end
-for i=65,90 do chars[#chars+1]=string.char(i) end
-
-local RNG = function(length)
-    local str = ""
-    for i = 1, length do
-        str = str .. chars[math.random(#chars)]
-    end
-    return str
-end
-
-local ResetFilter = function()
-    for i = 1, 10 do
-        local GUID = RNG(i)
-        local Filler = "i love asians so much"
-        local Reset = ("%s %s"):format(GUID, Filler)
-        task.spawn(function()
-            Fake(Reset)
-        end)
-    end
-end
-end
-
-local function onSayMessageRequest()
-    ResetFilter()
-end
-
-SayMessageRequest.OnClientEvent:Connect(onSayMessageRequest)
-wait(0.1)
-local chatService, players = game:GetService("Chat"), game:GetService("Players")
-
-local custom_chars = {
+    local custom_chars = {
     [" "] = "",
     ["stfu"] = "ѕ󠀕󠀕t󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕⁥⁥⁥⁥f󠀖󠀕⁥⁥⁥u",
     ["asshole"] = "аѕѕ⁥⁥⁥һоlе",
@@ -439,7 +341,7 @@ local custom_chars = {
     ["Dildo"] = "D⁥󠀕󠀕󠀕󠀕⁥⁥і⁥󠀕󠀕󠀕󠀕⁥⁥ӏ⁥󠀕󠀕󠀕󠀕⁥⁥do",
     ["discord"] = "dіѕсоrd",
     ["dickhead"] = "d￰￰￰￰￰і￰￰￰￰￰c￰￰￰￰￰kһ￰￰￰￰￰еad",
-    ["dick"] = "d⁥⁥⁥⁥i󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕⁥⁥⁥⁥c󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕⁥⁥⁥⁥k",
+    ["dick"] = "⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥d⁥⁥⁥⁥⁥і⁥⁥⁥⁥с⁥⁥⁥⁥⁥⁥⁥⁥k⁥⁥⁥⁥⁥",
     ["damn"] = "d⁥⁥⁥а⁥⁥⁥m⁥⁥⁥n⁥⁥⁥",
     ["doggystyle"] = "d⁥⁥⁥о⁥⁥⁥g⁥⁥⁥g⁥⁥⁥у⁥⁥⁥s⁥⁥⁥t⁥⁥⁥у⁥⁥⁥ӏ⁥⁥⁥е",
     ["Doggystyle"] = "D⁥⁥⁥о⁥⁥⁥g⁥⁥⁥g⁥⁥⁥у⁥⁥⁥s⁥⁥⁥t⁥⁥⁥у⁥⁥⁥ӏ⁥⁥⁥е",
@@ -526,6 +428,8 @@ local custom_chars = {
     ["whore"] = "w⁥⁥⁥һ⁥⁥⁥о⁥⁥⁥r⁥⁥⁥е",
     ["weed"] = "⁥⁥⁥⁥w⁥󠀕⁥eed",
     ["Weed"] = "⁥⁥⁥⁥W⁥󠀕⁥eed",
+    ["xxx"] = "⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥xx⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥x⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥",
+    ["Xxx"] = "⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥xx⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥x⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥",
     ["ASS"] = "АЅЅ",
     ["ANUS"] = "АΝUЅ",
     ["ARSE"] = "А⁥⁥⁥R⁥⁥⁥⁥⁥󠀕󠀕󠀕Ѕ⁥⁥⁥⁥⁥⁥Е",
@@ -642,7 +546,7 @@ local custom_chars = {
     ["Dumbass"] = "Du⁥⁥⁥⁥⁥⁥mb⁥⁥⁥⁥⁥⁥аѕѕ",
     ["Discord"] = "Dіѕсоrd",
     ["Dickhead"] = "D￰￰￰￰￰і￰￰￰￰￰c￰￰￰￰￰kһ￰￰￰￰￰еad",
-    ["Dick"] = "D⁥⁥⁥⁥i󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕⁥⁥⁥⁥c󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕⁥⁥⁥⁥k",
+    ["Dick"] = "⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥D⁥⁥⁥⁥⁥і⁥⁥⁥⁥с⁥⁥⁥⁥⁥⁥⁥⁥k⁥⁥⁥⁥⁥",
     ["Damn"] = "D⁥⁥⁥а⁥⁥⁥m⁥⁥⁥n⁥⁥⁥",
     ["E-Sex"] = "Е￰￰￰-￰￰￰Ѕ￰￰￰е￰￰￰х",
     ["e-Sex"] = "Е￰￰￰-￰￰￰Ѕ￰￰￰е￰￰￰х",
@@ -662,6 +566,8 @@ local custom_chars = {
     ["Hoe"] = "һое",
     ["Kys"] = "K⁥⁥⁥⁥⁥⁥⁥⁥y⁥⁥⁥ѕ",
     ["Lmfao"] = "Lm⁥⁥⁥⁥⁥⁥⁥⁥fа⁥⁥о",
+   ["rapist"] = "⁥⁥⁥⁥⁥⁥⁥⁥rа⁥⁥⁥⁥⁥⁥⁥⁥p⁥іѕt",
+   ["Rapist"] = "⁥⁥⁥⁥⁥⁥⁥⁥Rа⁥⁥⁥⁥⁥⁥⁥⁥p⁥іѕt",
     ["Motherfucker"] = "Mot￰￰￰￰￰￰￰h￰e￰rf￰￰￰￰￰u￰с￰￰￰￰￰￰￰￰k￰e￰￰￰￰￰￰￰￰r",
     ["Masturbating"] = "M⁥⁥⁥а⁥⁥⁥ѕ⁥⁥⁥t⁥⁥⁥u⁥⁥⁥r⁥⁥⁥b⁥⁥⁥а⁥⁥⁥t⁥⁥⁥ing",
     ["Meth"] = "Mе⁥⁥⁥⁥⁥⁥⁥⁥th",
@@ -729,69 +635,114 @@ local custom_chars = {
     ["kill"] = "k󠀕󠀕󠀕і󠀕󠀕󠀕l󠀕󠀕󠀕ӏ",
     ["yourself"] = "уо󠀕󠀕⁥⁥⁥⁥ur󠀕󠀕⁥⁥⁥⁥ѕ󠀕󠀕⁥⁥⁥⁥еlf",
     ["pedo"] = "p⁥⁥е⁥⁥⁥d⁥⁥⁥⁥⁥⁥⁥о"
-}
+    }
 
-local default = ""
+    local default = ""
 
-local player = players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-local chatGui, chatBar = playerGui:WaitForChild("Chat")
+    local player = players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    local chatGui, chatBar = playerGui:WaitForChild("Chat")
 
-repeat task.wait() until chatGui:FindFirstChild("ChatBar", true)
-chatBar = chatGui:FindFirstChild("ChatBar", true)
+    repeat task.wait() until chatGui:FindFirstChild("ChatBar", true)
+    chatBar = chatGui:FindFirstChild("ChatBar", true)
 
-do
-    local randomstr = function()
-        local characters = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
-        local str = ""
-        local length = math.random(12, 32)
+    do
+        local randomstr = function()
+            local characters = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
+            local str = ""
+            local length = math.random(12, 32)
 
-        for i = 1, length do
-            str = str .. characters[math.random(#characters)]
-        end
-        return str
-    end
-    task.spawn(function()
-        while wait(.1) do
-            if chatBar:IsFocused() then
-                chatService:FilterStringForBroadcast(randomstr(), player)
+            for i = 1, length do
+                str = str .. characters[math.random(#characters)]
             end
+            return str
         end
-    end)
+        task.spawn(function()
+            while wait(.1) do
+                if chatBar:IsFocused() then
+                    chatService:FilterStringForBroadcast(randomstr(), player)
+                end
+            end
+        end)
+    end
+
+    local c = function()
+        for i = 1, 2 do
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("/e Hey how are you doing?", "All")
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("/e How are you doing?", "All")
+        end
+    end
+
+    local old
+    old = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+
+        if method == "FireServer" and self.Name == "SayMessageRequest" and #args == 2 and not checkcaller() then
+            local newMessage = args[1]
+            for i,v in pairs(custom_chars) do
+                local rep = string.gsub(newMessage, i, v .. "⁥")
+                newMessage = rep
+            end
+            newMessage = "" .. newMessage .. default
+
+            args[1] = newMessage
+            coroutine.wrap(c)
+            return old(self, unpack(args))
+        end
+        return old(self, ...)
+    end))
+
+    connection = old
 end
 
-local c = function()
-    for i = 1, 2 do
-        game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("/e Hey how are you doing?", "All")
-        game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("/e How are you doing?", "All")
+local function stopScript()
+    if connection then
+        hookmetamethod(game, "__namecall", connection)
+        connection = nil
     end
 end
 
-local old
-old = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-    local method = getnamecallmethod()
-    local args = {...}
-
-    if method == "FireServer" and self.Name == "SayMessageRequest" and #args == 2 and not checkcaller() then
-        local newMessage = args[1]
-        for i,v in pairs(custom_chars) do
-            local rep = string.gsub(newMessage, i, v .. "⁥")
-            newMessage = rep
+Tab:AddToggle({
+    Name = "Automatic Chat Bypasser",
+    Default = false,
+    Callback = function(value)
+        enabled = value
+        if enabled then
+            startScript()
+wait()
+Connection.OnInvoke = function(Message)
+    Message = Gen(Message)
+    Chat(Message)
+    ResetFilter()
+end
+wait()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/AnthonyIsntHere/anthonysrepository/main/scripts/AntiChatLogger.lua'))()
+        else
+            stopScript()
         end
-        newMessage = "" .. newMessage .. default
-
-        args[1] = newMessage
-        coroutine.wrap(c)
-        return old(self, unpack(args))
-    end
-    return old(self, ...)
-end))
     end
 })
 
   Tab:AddButton({
-    Name = "Stop tagging messages",
+    Name = "Stop Tags (v1)",
     Callback = function()
+wait()
+game.StarterGui:SetCore("SendNotification", {Title="Info"; Text="The button prevents tagging; once clicked, it stops tagging the bypasses for a bit."; Duration=5;})
+wait()
+      game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("abcdeABCDE12345~`|•√?xđ", "All")
+wait()
+ResetFilter()
+    end
+})
+
+  Tab:AddButton({
+    Name = "Stop Tags (v1.2)",
+    Callback = function()
+game.StarterGui:SetCore("SendNotification", {Title="Info"; Text="The button prevents tagging; once clicked, it stops tagging the bypasses for a bit."; Duration=5;})
+wait()
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("", "All")
+wait()
 ResetFilter()
     end
 })
@@ -800,972 +751,157 @@ local Section = Tab:AddSection({
     Name = "lowercase A-Z"
 })
 
-  Tab:AddButton({
-    Name = "asshole",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("аѕѕ⁥⁥⁥һоlе", "All")
-ResetFilter()
-    end
-})
+local function CheckTagDetection(message)
+    local chatService = game:GetService("Chat")
+    local filteredMessage = chatService:FilterStringForBroadcast(message, game.Players.LocalPlayer)
+    return filteredMessage ~= message
+end
+
+local function AddButton(name, message)
+    local isCensored = CheckTagDetection(message)
+    local buttonName = name .. (isCensored and " {PATCHED}" or " {WORKING}")
+
+    Tab:AddButton({
+        Name = buttonName,
+        Callback = function()
+            if not isCensored then
+                ResetFilter()
+                game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
+                ResetFilter()
+            end
+        end
+    })
+end
+
+ Tab:AddLabel("A")
+AddButton("asshole", "⁥⁥а⁥⁥⁥⁥⁥⁥⁥⁥ѕ⁥󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥⁥⁥⁥s⁥⁥⁥⁥⁥⁥һ⁥⁥󠀕󠀕о󠀕⁥⁥⁥󠀕󠀖ӏ⁥⁥⁥󠀕󠀖е⁥")
+AddButton("ass", "а⁥⁥⁥ѕ⁥⁥⁥ѕ")
+AddButton("anus", "а⁥⁥⁥n⁥⁥⁥u⁥⁥⁥ѕ⁥⁥⁥")
+AddButton("arse", "аr⁥⁥ѕ⁥е")
+AddButton("anal", "аn⁥⁥⁥⁥аӏ")
+ Tab:AddLabel("B")
+AddButton("Boner", "⁥В⁥⁥o⁥⁥n⁥⁥е⁥⁥r")
+AddButton("blowjob", "b⁥⁥⁥ӏ⁥⁥⁥o⁥⁥⁥w⁥⁥⁥j⁥⁥⁥о⁥⁥⁥b⁥⁥⁥")
+AddButton("bitches", "￰￰b￰￰і󠀕⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕t⁥⁥⁥⁥󠀕с⁥⁥⁥⁥󠀕һ⁥⁥⁥⁥󠀕󠀕󠀕󠀕е⁥⁥⁥⁥s")
+AddButton("bitch", "⁥⁥⁥⁥⁥b󠀕󠀕⁥⁥⁥⁥⁥⁥⁥󠀕󠀕⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀕󠀕i⁥t⁥⁥⁥⁥󠀕󠀕⁥с⁥⁥⁥⁥һ")
+AddButton("bullshit", "b⁥⁥⁥⁥u⁥⁥⁥l⁥⁥⁥⁥ӏ⁥⁥⁥s⁥⁥⁥һ⁥⁥⁥⁥⁥⁥⁥⁥і⁥⁥⁥t")
+AddButton("bastard", "b⁥⁥⁥а⁥⁥⁥ѕ⁥⁥⁥t⁥⁥⁥а⁥⁥⁥r⁥⁥⁥d")
+AddButton("beaner", "b⁥⁥⁥е⁥⁥⁥а⁥⁥⁥n⁥⁥⁥е⁥⁥⁥r")
+AddButton("bondage", "b⁥⁥⁥о⁥⁥⁥n⁥⁥⁥d⁥⁥⁥а⁥⁥⁥g⁥⁥⁥е⁥⁥⁥")
+AddButton("butthole", "bu⁥⁥⁥⁥⁥⁥⁥⁥ttһоӏе")
+AddButton("butt", "bu⁥⁥⁥⁥⁥⁥⁥⁥tt")
+AddButton("bootyhole", "b󠀕󠀕󠀕󠀕о⁥⁥⁥⁥󠀕󠀕⁥⁥⁥⁥о󠀕󠀕󠀕󠀕󠀕󠀕ty󠀕󠀕󠀕󠀕һoӏe")
+AddButton("booty", "b󠀕󠀕󠀕󠀕о⁥⁥⁥⁥󠀕󠀕⁥⁥⁥⁥о󠀕󠀕󠀕󠀕󠀕󠀕ty")
+AddButton("boobs", "b⁥⁥⁥⁥⁥⁥⁥⁥⁥o⁥⁥⁥⁥⁥⁥⁥о⁥⁥⁥⁥⁥⁥⁥⁥⁥b⁥⁥⁥⁥⁥⁥s")
+AddButton("boob", "bооb")
+AddButton("breasts", "brеаѕtѕ")
+AddButton("bbc", "b⁥󠀕󠀕⁥󠀕󠀕⁥⁥⁥b⁥⁥⁥с")
+ Tab:AddLabel("C")
+AddButton("cocaine", "с⁥⁥⁥о⁥⁥⁥с⁥⁥⁥а⁥⁥⁥i⁥⁥⁥n⁥⁥⁥е")
+AddButton("creampie", "с⁥⁥⁥r⁥⁥⁥е⁥⁥⁥а⁥⁥⁥m⁥⁥⁥р⁥⁥⁥i⁥⁥⁥е")
+AddButton("cumming", "с⁥⁥⁥⁥umming")
+AddButton("cum", "с⁥⁥⁥⁥um")
+AddButton("cunts", "сu⁥⁥⁥⁥⁥⁥⁥⁥ntѕ")
+AddButton("cunt", "с⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀖󠀗󠀕󠀖󠀖󠀗󠀕󠀖󠀖󠀗󠀕󠀖⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥u󠀕󠀖⁥⁥⁥n󠀕󠀖t")
+AddButton("clit", "с󠀕󠀕⁥І󠀕󠀕⁥і󠀕󠀕⁥t")
+AddButton("cuckold", "с⁥⁥⁥u⁥⁥⁥с⁥⁥⁥k⁥⁥⁥о⁥⁥⁥ӏ⁥⁥⁥d⁥⁥⁥")
+AddButton("cuck", "с⁥⁥⁥u⁥⁥⁥с⁥⁥⁥k")
+AddButton("condoms", "с⁥⁥⁥о⁥⁥⁥n⁥⁥⁥d⁥⁥⁥о⁥⁥⁥m⁥⁥⁥s")
+AddButton("condom", "с⁥⁥⁥о⁥⁥⁥n⁥⁥⁥d⁥⁥⁥о⁥⁥⁥m")
+AddButton("coochies", "с⁥⁥⁥о⁥⁥⁥о⁥⁥⁥с⁥⁥⁥һ⁥⁥⁥і⁥⁥⁥е⁥⁥⁥s")
+AddButton("coochie", "с⁥⁥⁥о⁥⁥⁥o⁥⁥⁥с⁥⁥⁥һ⁥⁥⁥i⁥⁥⁥е")
+AddButton("cunny", "сu⁥⁥⁥⁥⁥⁥n⁥⁥⁥⁥⁥⁥nу")
+ Tab:AddLabel("D")
+AddButton("dumbass", "d⁥⁥⁥⁥⁥u⁥⁥󠀕󠀕󠀕󠀖󠀖⁥⁥⁥⁥m⁥⁥󠀕󠀕󠀕󠀖󠀖⁥⁥⁥b⁥⁥⁥⁥⁥⁥а⁥⁥⁥⁥⁥ѕ⁥⁥⁥⁥⁥ѕ")
+AddButton("dickhead", "d￰￰￰￰￰і￰￰￰￰￰c￰￰￰￰￰kһ￰￰￰￰￰еad")
+AddButton("discord", "d￰￰￰і￰￰￰ѕ￰￰￰с￰￰￰о￰￰￰r￰￰￰d")
+AddButton("doggystyle", "d⁥⁥⁥о⁥⁥⁥g⁥⁥⁥g⁥⁥⁥у⁥⁥⁥s⁥⁥⁥t⁥⁥⁥у⁥⁥⁥ӏ⁥⁥⁥е")
+AddButton("dildo", "d⁥󠀕󠀕󠀕󠀕⁥⁥і⁥󠀕󠀕󠀕󠀕⁥⁥ӏ⁥󠀕󠀕󠀕󠀕⁥⁥do")
+AddButton("damn", "d⁥⁥⁥а⁥⁥⁥m⁥⁥⁥n⁥⁥⁥")
+AddButton("dicks", "⁥⁥⁥⁥⁥⁥d⁥⁥і⁥⁥⁥󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰󠀖󠀕󠀕󠀕󠀕󠀖󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀕󠀕󠀕󠀕󠀖с⁥k⁥⁥⁥⁥s")
+ Tab:AddLabel("E")
+AddButton("E-Rape", "Е-Rаре")
+AddButton("E-Sex", "󠀖󠀗󠀕󠀖E￰￰󠀗-￰￰￰Ѕ￰󠀖󠀗󠀕󠀖￰￰е￰￰￰х")
+ Tab:AddLabel("F")
+AddButton("fatass", "fat￰￰￰а￰￰￰￰￰￰￰￰￰￰￰￰⁥ѕ￰￰ѕ")
+AddButton("fucked", "⁥⁥󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥⁥⁥f⁥⁥⁥⁥⁥⁥⁥⁥uс⁥⁥⁥⁥⁥⁥⁥⁥k󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕е󠀕󠀕󠀕󠀕󠀕󠀕d")
+AddButton("fuckers", "f⁥⁥⁥⁥⁥⁥⁥⁥uс⁥⁥⁥⁥⁥⁥⁥⁥k󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕е󠀕󠀕󠀕󠀕󠀕󠀕r⁥⁥󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥⁥⁥ѕ")
+AddButton("fucker", "⁥⁥󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥⁥⁥f⁥⁥⁥⁥⁥⁥⁥⁥uс⁥⁥⁥⁥⁥⁥⁥⁥k󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕󠀕󠀕e󠀕󠀕󠀕󠀕󠀕󠀕r")
+AddButton("fap", "f⁥󠀕⁥⁥а⁥󠀕⁥⁥р")
+AddButton("fag", "⁥⁥⁥⁥⁥⁥f⁥⁥а⁥⁥⁥󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀕󠀕󠀕󠀕󠀖󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀕󠀕󠀕󠀕󠀖g⁥⁥⁥⁥")
+AddButton("femboys", "fеmbоys")
+AddButton("femboy", "fеmbоy")
+AddButton("fanny", "fa⁥⁥⁥⁥⁥⁥n⁥⁥⁥⁥⁥⁥nу")
+ Tab:AddLabel("H")
+AddButton("horny", "һ⁥⁥⁥⁥⁥о󠀕󠀕󠀕󠀕r⁥⁥⁥⁥⁥n⁥⁥⁥⁥⁥у")
+AddButton("Hitler", "Нi󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖⁥⁥⁥⁥tl⁥⁥⁥⁥󠀗󠀕󠀕󠀕󠀕󠀕󠀖е󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖r")
+AddButton("hentai", "h󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕e󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕n󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕t󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕a󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕i")
+AddButton("hoes", "һоеѕ")
+AddButton("hoe", "һ⁥⁥⁥⁥󠀕󠀕󠀕⁥⁥⁥о⁥⁥⁥⁥⁥⁥⁥е")
+ Tab:AddLabel("I")
+AddButton("instagram", "і󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥n󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥ѕ󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥tаg󠀕󠀕󠀕󠀕rаm")
+AddButton("insta", "i󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥n󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥s󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥ta")
+ Tab:AddLabel("K")
+AddButton("kys", "k⁥⁥⁥⁥⁥⁥⁥⁥y⁥⁥⁥ѕ")
+ Tab:AddLabel("L")
+AddButton("lmfao", "ӏm⁥⁥⁥⁥⁥⁥⁥⁥fа⁥⁥о")
+AddButton("lmao", "ӏ󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕⁥⁥⁥⁥maо")
+ Tab:AddLabel("M")
+AddButton("motherfucker", "m󠀕ot￰￰￰󠀕󠀕￰￰￰һ￰e󠀕󠀕󠀕󠀕￰rf￰￰￰￰󠀕󠀕￰u￰с￰￰￰￰󠀕󠀕󠀕󠀕￰￰￰￰k￰е￰￰￰￰￰￰￰￰r")
+AddButton("masturbate", "m󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕a󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕ѕ󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕t󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕u󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕r󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕b󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕a󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕t󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕e")
+AddButton("masturbating", "m⁥⁥⁥а⁥⁥⁥ѕ⁥⁥⁥t⁥⁥⁥u⁥⁥⁥r⁥⁥⁥b⁥⁥⁥а⁥⁥⁥t⁥⁥⁥ing")
+AddButton("molest", "m⁥⁥⁥⁥o⁥⁥⁥⁥ӏ⁥⁥⁥⁥е⁥⁥⁥ѕ⁥⁥⁥⁥t")
+AddButton("meth", "mе⁥⁥⁥⁥⁥⁥⁥⁥th")
+ Tab:AddLabel("N")
+AddButton("negro", "n󠀕󠀕󠀕󠀕󠀕󠀕󠀕e󠀕󠀕󠀕󠀕󠀕󠀕󠀕g󠀕󠀕󠀕󠀕󠀕󠀕󠀕r󠀕󠀕󠀕󠀕󠀕󠀕󠀕o")
+AddButton("nipples", "n󠀕󠀕⁥i󠀕󠀕⁥⁥󠀕р⁥p󠀕󠀖⁥⁥󠀕l󠀕󠀕󠀕⁥⁥󠀕󠀕󠀖󠀕e󠀖⁥⁥ѕ")
+AddButton("nipple", "n󠀕󠀕⁥i󠀕󠀕⁥⁥󠀕р⁥p󠀕󠀖⁥⁥󠀕l󠀕󠀕󠀕⁥⁥󠀕󠀕󠀖󠀕e󠀖⁥⁥")
+AddButton("naked", "nаkеd")
+AddButton("nudes", "nudеѕ")
+AddButton("nude", "n󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕u󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕d󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕е")
+AddButton("nazi", "󠀕￰￰￰￰￰￰󠀕￰￰￰￰󠀕n󠀕￰￰￰󠀕󠀕󠀕󠀕󠀕￰￰￰￰￰￰󠀕󠀕󠀕󠀕󠀕￰￰￰󠀕⁥a￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰󠀕󠀕⁥z󠀕￰󠀕󠀕󠀕￰￰￰￰￰￰￰￰󠀕󠀕￰￰󠀕⁥i")
+ Tab:AddLabel("O")
+AddButton("orgasm", "оrg⁥⁥⁥⁥аѕm")
+ Tab:AddLabel("P")
+AddButton("pedophile", "p⁥⁥е⁥⁥⁥d⁥⁥⁥⁥⁥⁥⁥ор⁥⁥hіӏ⁥⁥⁥⁥⁥⁥⁥е")
+AddButton("pornhub", "⁥⁥р󠀕󠀕󠀕󠀕󠀕󠀕󠀕о󠀕󠀕󠀕󠀕󠀕󠀕󠀕r󠀕󠀕󠀕󠀕󠀕󠀕󠀕n󠀕󠀕󠀕󠀕󠀕󠀕󠀕һ󠀕󠀕󠀕󠀕󠀕󠀕󠀕u󠀕󠀕󠀕󠀕󠀕󠀕󠀕b")
+AddButton("penis", "pen󠀕󠀖󠀗󠀘󠀕󠀖⁥⁥⁥⁥⁥⁥⁥⁥󠀕і󠀖󠀗󠀘󠀖󠀗ѕ")
+AddButton("porn", "роrn")
+AddButton("pussies", "р⁥⁥⁥u⁥⁥⁥s⁥⁥⁥s⁥⁥⁥i⁥⁥⁥е⁥⁥⁥s")
+AddButton("pussy", "р⁥⁥⁥u⁥⁥⁥s⁥⁥⁥s⁥⁥⁥у")
+ Tab:AddLabel("Q")
+AddButton("queer", "󠀕󠀕￰￰󠀕q￰￰￰󠀕󠀕󠀕￰￰￰u￰￰￰￰￰￰e󠀕󠀕󠀕￰￰￰￰￰￰e￰￰￰￰￰￰r")
+ Tab:AddLabel("R")
+AddButton("retarded", "r⁥⁥⁥⁥еt⁥⁥⁥⁥󠀗󠀕󠀕ar⁥⁥⁥⁥dе󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖d")
+AddButton("retard", "⁥⁥r⁥󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕е󠀖󠀕t 󠀕󠀕󠀕󠀕󠀖󠀕а⁥⁥⁥󠀕󠀕󠀕󠀖󠀕r󠀕󠀕󠀕⁥⁥⁥⁥󠀕d")
+AddButton("rape", "rаре")
+ Tab:AddLabel("S")
+AddButton("schlong", "ѕс⁥⁥⁥⁥һ󠀗󠀕󠀕󠀕󠀕ӏо⁥⁥⁥⁥n󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗g")
+AddButton("stripper", "ѕtrірреr")
+AddButton("slave", "ѕ⁥⁥⁥ӏ⁥⁥⁥а⁥⁥⁥v⁥⁥⁥е")
+AddButton("sperm", "ѕpе󠀕￰￰￰￰󠀖r￰󠀖m")
+AddButton("seduce", "ѕеduсе")
+AddButton("slut", "sӏut")
+AddButton("shit", "󠀖󠀖ѕ⁥⁥󠀖⁥⁥⁥⁥һ⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀖󠀗󠀕󠀖󠀖󠀗󠀕󠀖󠀖󠀗󠀕󠀖⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥i⁥t")
+AddButton("sexy", "ѕеху")
+AddButton("sex", "ѕ⁥⁥⁥е⁥⁥⁥х⁥⁥⁥")
+ Tab:AddLabel("T")
+AddButton("titties", "t⁥⁥⁥⁥⁥⁥і⁥⁥⁥⁥⁥⁥t⁥⁥⁥⁥⁥⁥t⁥⁥⁥⁥⁥⁥і⁥⁥⁥⁥⁥⁥е⁥⁥⁥⁥⁥⁥ѕ")
+AddButton("thots", "t󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖h⁥⁥⁥󠀗󠀕󠀕оt󠀗󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥ѕ")
+AddButton("thot", "t󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖h⁥⁥⁥󠀗󠀕󠀕оt")
+AddButton("tits", "t󠀗󠀕󠀕󠀕󠀕󠀕i⁥⁥⁥⁥t⁥⁥⁥⁥ѕ")
+AddButton("tit", "⁥⁥⁥t󠀗󠀕⁥⁥⁥⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕і⁥⁥⁥⁥t")
+ Tab:AddLabel("V")
+AddButton("virginity", "v￰￰￰￰￰￰і￰￰￰￰￰￰￰￰r￰￰￰￰￰￰￰￰g￰￰￰￰￰￰￰￰￰і￰￰￰￰￰￰￰￰n￰￰￰￰￰￰￰і￰￰￰￰t￰￰￰у")
+AddButton("virgins", "v󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗ir⁥⁥⁥⁥󠀗󠀕󠀕󠀕󠀕󠀕gi󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖ns")
+AddButton("virgin", "󠀕󠀕v󠀕󠀕󠀕󠀕￰￰￰￰￰￰󠀘і󠀖￰￰￰󠀕󠀕󠀕￰￰￰￰󠀘r󠀕￰￰￰￰￰￰￰￰󠀖g󠀖￰󠀕󠀕󠀕￰￰￰￰￰￰￰￰󠀘і󠀘￰￰￰￰￰￰￰￰n")
+AddButton("vagina", "⁥⁥v󠀗󠀕󠀕󠀕󠀕⁥⁥⁥⁥󠀕󠀖⁥⁥⁥⁥а󠀗󠀕󠀕󠀕g⁥⁥⁥⁥і⁥⁥⁥⁥󠀗󠀕n⁥⁥⁥⁥󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖a")
+ Tab:AddLabel("W")
+AddButton("whore", "w⁥⁥⁥һ⁥⁥⁥о⁥⁥⁥r⁥⁥⁥е")
+AddButton("weed", "󠀕￰￰￰￰￰￰󠀕￰￰￰￰󠀕w󠀕￰￰￰󠀕󠀕󠀕󠀕󠀕￰￰￰￰￰￰󠀕󠀕󠀕󠀕󠀕￰￰￰󠀕⁥е￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰󠀕󠀕⁥е󠀕￰󠀕󠀕󠀕￰￰￰￰￰￰￰￰󠀕󠀕￰￰󠀕⁥d")
+ Tab:AddLabel("X")
+AddButton("xxx", "⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥xx⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥x⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥")
 
-  Tab:AddButton({
-    Name = "ass",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("а⁥⁥⁥ѕ⁥⁥⁥ѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "anus",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("а⁥⁥⁥n⁥⁥⁥u⁥⁥⁥ѕ⁥⁥⁥", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "arse ",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("аr⁥⁥ѕ⁥е", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "anal",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("аn⁥⁥⁥⁥аl", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "Boner",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥В⁥⁥o⁥⁥n⁥⁥е⁥⁥r", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "blowjob",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("bӏow⁥⁥⁥j⁥⁥⁥о⁥⁥⁥b⁥⁥⁥", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "bitches ",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("￰￰b￰￰і󠀕⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕t⁥⁥⁥⁥󠀕с⁥⁥⁥⁥󠀕һ⁥⁥⁥⁥󠀕󠀕󠀕󠀕е⁥⁥⁥⁥s", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "bitch ",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥b⁥⁥⁥і⁥⁥⁥t󠀕󠀕󠀖󠀖󠀗⁥⁥⁥с⁥⁥⁥󠀕󠀕󠀖󠀖󠀗h󠀕󠀕󠀖󠀖󠀗", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "boobies ",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("bо⁥⁥⁥⁥⁥⁥⁥⁥оbіеs", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "bullshit ",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("bulӏsһ⁥⁥⁥⁥⁥⁥⁥⁥іt", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "bastard ",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("bas⁥⁥⁥⁥⁥⁥⁥⁥tard", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "beaner",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("b⁥⁥⁥е⁥⁥⁥а⁥⁥⁥n⁥⁥⁥е⁥⁥⁥r", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "bondage",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("b⁥⁥⁥о⁥⁥⁥n⁥⁥⁥d⁥⁥⁥а⁥⁥⁥g⁥⁥⁥е⁥⁥⁥", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "butthole",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("bu⁥⁥⁥⁥⁥⁥⁥⁥tthоle", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "bootyhole",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("b󠀕󠀕󠀕󠀕о⁥⁥⁥⁥󠀕󠀕⁥⁥⁥⁥о󠀕󠀕󠀕󠀕󠀕󠀕ty󠀕󠀕󠀕󠀕һoӏe", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "butt",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("bu⁥⁥⁥⁥⁥⁥⁥⁥tt", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "booty",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("b󠀕󠀕󠀕󠀕о⁥⁥⁥⁥󠀕󠀕⁥⁥⁥⁥о󠀕󠀕󠀕󠀕󠀕󠀕ty", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "boobs",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("b󠀕󠀕󠀕󠀕о⁥⁥⁥⁥󠀕󠀕⁥⁥⁥о󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕b󠀕󠀕󠀕󠀕ѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "boob",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("bооb", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "breasts",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("brеаѕtѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "bbc",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("b⁥⁥⁥b⁥⁥⁥с", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "cocaine",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥о⁥⁥⁥с⁥⁥⁥а⁥⁥⁥i⁥⁥⁥n⁥⁥⁥е", "All")
-ResetFilter()
-    end
-})
-
-
-  Tab:AddButton({
-    Name = "creampie",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥r⁥⁥⁥е⁥⁥⁥а⁥⁥⁥m⁥⁥⁥р⁥⁥⁥i⁥⁥⁥е", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "cumming",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥⁥umming", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "cum",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥⁥um", "All")
-ResetFilter()
-    end
-})
-
-
-  Tab:AddButton({
-    Name = "cunts",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("сu⁥⁥⁥⁥⁥⁥⁥⁥ntѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "cunt",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥⁥с󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕󠀖󠀕u⁥⁥⁥⁥󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕󠀖󠀕n⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥t", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "cock",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥о⁥⁥⁥с⁥⁥⁥k", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "clit",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с󠀕󠀕⁥І󠀕󠀕⁥і󠀕󠀕⁥t", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "cuck",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥u⁥⁥⁥с⁥⁥⁥k", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "cuckold",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥u⁥⁥⁥с⁥⁥⁥k⁥⁥⁥о⁥⁥⁥ӏ⁥⁥⁥d⁥⁥⁥", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "condoms",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥о⁥⁥⁥n⁥⁥⁥d⁥⁥⁥о⁥⁥⁥m⁥⁥⁥s", "All")
-ResetFilter()
-    end
-})
-
-
-  Tab:AddButton({
-    Name = "condom",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥о⁥⁥⁥n⁥⁥⁥d⁥⁥⁥о⁥⁥⁥m", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "coochies",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥о⁥⁥⁥о⁥⁥⁥с⁥⁥⁥һ⁥⁥⁥і⁥⁥⁥е⁥⁥⁥s", "All")
-ResetFilter()
-    end
-})
-
-
-  Tab:AddButton({
-    Name = "coochie",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥о⁥⁥⁥o⁥⁥⁥с⁥⁥⁥һ⁥⁥⁥i⁥⁥⁥е", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "cunny",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("сu⁥⁥⁥⁥⁥⁥n⁥⁥⁥⁥⁥⁥nу", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "dumbass",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("d⁥⁥⁥⁥⁥u⁥⁥⁥⁥⁥⁥m⁥⁥⁥⁥⁥b⁥⁥⁥⁥⁥⁥а⁥⁥⁥⁥⁥ѕ⁥⁥⁥⁥⁥ѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "dickhead",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("d￰￰￰￰￰і￰￰￰￰￰c￰￰￰￰￰kһ￰￰￰￰￰еad", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "discord",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("dіѕсоrd", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "doggystyle",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("d⁥⁥⁥о⁥⁥⁥g⁥⁥⁥g⁥⁥⁥у⁥⁥⁥s⁥⁥⁥t⁥⁥⁥у⁥⁥⁥ӏ⁥⁥⁥е", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "dildo",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("d⁥󠀕󠀕󠀕󠀕⁥⁥і⁥󠀕󠀕󠀕󠀕⁥⁥ӏ⁥󠀕󠀕󠀕󠀕⁥⁥do", "All")
-ResetFilter()
-    end
-})
-
-
-  Tab:AddButton({
-    Name = "damn",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("d⁥⁥⁥а⁥⁥⁥m⁥⁥⁥n⁥⁥⁥", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "dick",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥⁥⁥⁥⁥d⁥⁥і⁥⁥⁥󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀕󠀕󠀕󠀕󠀖󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀕󠀕󠀕󠀕󠀖с⁥k⁥⁥⁥⁥", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "E-Rape",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Е-Rаре", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "E-Sex",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Е￰￰￰-￰￰￰Ѕ￰￰￰е￰￰￰х", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "fatass",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("fat￰￰￰а￰￰￰￰￰￰￰￰￰￰￰￰⁥ѕ￰￰ѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "fucked",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("󠀕󠀕󠀕f￰￰￰￰￰￰uс￰￰󠀕󠀕󠀕󠀕￰￰￰￰￰￰k￰￰￰￰￰￰￰￰e￰￰￰￰d", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "fuckers",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("󠀕󠀕󠀕f￰￰￰￰￰￰uс￰￰󠀕󠀕󠀕󠀕￰￰￰￰￰￰k￰￰￰￰￰￰￰￰e￰￰￰￰󠀕󠀕󠀕rѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "faggot",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥⁥⁥f⁥󠀕⁥ а󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥g󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥g⁥⁥о󠀕󠀕⁥⁥󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥t⁥⁥", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "fag",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥⁥⁥⁥⁥f⁥⁥а⁥⁥⁥󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀕󠀕󠀕󠀕󠀖󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀕󠀕󠀕󠀕󠀖g⁥⁥⁥⁥", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "fap",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("f⁥󠀕⁥⁥а⁥󠀕⁥⁥р", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "femboys",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("fеmbоys", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "femboy",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("fеmbоy", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "fanny",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("fa⁥⁥⁥⁥⁥⁥n⁥⁥⁥⁥⁥⁥nу", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "horny",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("һ⁥⁥⁥⁥⁥о󠀕󠀕󠀕󠀕r⁥⁥⁥⁥⁥n⁥⁥⁥⁥⁥у", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "Hitler",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Нi󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖⁥⁥⁥⁥tl⁥⁥⁥⁥󠀗󠀕󠀕󠀕󠀕󠀕󠀖е󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖r", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "hentai",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("h󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕e󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕n󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕t󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕a󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕i", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "hoes",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("һоеѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "hoe",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("һое", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "instagram",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥n󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥ѕ󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥tаg󠀕󠀕󠀕󠀕rаm", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "insta",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("i󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥n󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥s󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥ta", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "kys",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("k⁥⁥⁥⁥⁥⁥⁥⁥y⁥⁥⁥ѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "lmfao",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ӏm⁥⁥⁥⁥⁥⁥⁥⁥fа⁥⁥о", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "lmao",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ӏ󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕⁥⁥⁥⁥maо", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "motherfucker",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("mot￰￰￰￰￰￰￰h￰e￰rf￰￰￰￰￰u￰с￰￰￰￰￰￰￰￰k￰e￰￰￰￰￰￰￰￰r", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "masturbate",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("m󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕a󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕ѕ󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕t󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕u󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕r󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕b󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕a󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕t󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕e", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "masturbating",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("m⁥⁥⁥а⁥⁥⁥ѕ⁥⁥⁥t⁥⁥⁥u⁥⁥⁥r⁥⁥⁥b⁥⁥⁥а⁥⁥⁥t⁥⁥⁥ing", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "molest",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("m⁥⁥⁥⁥o⁥⁥⁥⁥ӏ⁥⁥⁥⁥е⁥⁥⁥ѕ⁥⁥⁥⁥t", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "meth",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("mе⁥⁥⁥⁥⁥⁥⁥⁥th", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "naked",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("nаkеd", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "negro",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("n󠀕󠀕󠀕󠀕󠀕󠀕󠀕e󠀕󠀕󠀕󠀕󠀕󠀕󠀕g󠀕󠀕󠀕󠀕󠀕󠀕󠀕r󠀕󠀕󠀕󠀕󠀕󠀕󠀕o", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "nipples",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("n󠀕󠀕⁥i󠀕󠀕⁥⁥󠀕р⁥p󠀕󠀖⁥⁥󠀕l󠀕󠀕󠀕⁥⁥󠀕󠀕󠀖󠀕e󠀖⁥⁥ѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "nipple",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("n󠀕󠀕⁥i󠀕󠀕⁥⁥󠀕р⁥p󠀕󠀖⁥⁥󠀕l󠀕󠀕󠀕⁥⁥󠀕󠀕󠀖󠀕e󠀖⁥⁥", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "nudes",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("nudеѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "nude",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("n󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕u󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕d󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕е", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "nazi",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥⁥⁥⁥n⁥⁥⁥⁥⁥a⁥⁥⁥⁥⁥z⁥⁥⁥⁥⁥i⁥⁥⁥⁥⁥", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "orgasm",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("оrg⁥⁥⁥⁥аѕm", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "pedophile",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("p⁥⁥е⁥⁥⁥d⁥⁥⁥⁥⁥⁥⁥ор⁥⁥hіӏ⁥⁥⁥⁥⁥⁥⁥е", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "pornhub",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥р󠀕󠀕󠀕󠀕󠀕󠀕󠀕о󠀕󠀕󠀕󠀕󠀕󠀕󠀕r󠀕󠀕󠀕󠀕󠀕󠀕󠀕n󠀕󠀕󠀕󠀕󠀕󠀕󠀕һ󠀕󠀕󠀕󠀕󠀕󠀕󠀕u󠀕󠀕󠀕󠀕󠀕󠀕󠀕b", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "penis",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("pen󠀕󠀖󠀗󠀘󠀕󠀖⁥⁥⁥⁥⁥⁥⁥⁥󠀕і󠀖󠀗󠀘󠀖󠀗ѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "porn",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("роrn", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "pussies",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("р⁥⁥⁥u⁥⁥⁥s⁥⁥⁥s⁥⁥⁥i⁥⁥⁥е⁥⁥⁥s", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "pussy",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("р⁥⁥⁥u⁥⁥⁥s⁥⁥⁥s⁥⁥⁥у", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "queer",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("󠀕󠀕￰￰󠀕q￰￰￰󠀕󠀕󠀕￰￰￰u￰￰￰￰￰￰e󠀕󠀕󠀕￰￰￰￰￰￰e￰￰￰￰￰￰r", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "retarded",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("r⁥⁥⁥⁥еt⁥⁥⁥⁥󠀗󠀕󠀕ar⁥⁥⁥⁥dе󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖d", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "retard",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥r⁥󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕е󠀖󠀕t 󠀕󠀕󠀕󠀕󠀖󠀕а⁥⁥⁥󠀕󠀕󠀕󠀖󠀕r󠀕󠀕󠀕⁥⁥⁥⁥󠀕d", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "rape",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("rаре", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "schlong",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕс⁥⁥⁥⁥һ󠀗󠀕󠀕󠀕󠀕ӏо⁥⁥⁥⁥n󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗g", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "stripper",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕtrірреr", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "slave",
-    Callback = function()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕ⁥⁥⁥ӏ⁥⁥⁥а⁥⁥⁥v⁥⁥⁥е", "All")
-    end
-})
-
-  Tab:AddButton({
-    Name = "sperm",
-    Callback = function()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕpе󠀕￰￰￰￰󠀖r￰󠀖m", "All")
-    end
-})
-
-  Tab:AddButton({
-    Name = "seduce",
-    Callback = function()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕеduсе", "All")
-    end
-})
-
-  Tab:AddButton({
-    Name = "slut",
-    Callback = function()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("sӏut", "All")
-    end
-})
-
-  Tab:AddButton({
-    Name = "shit",
-    Callback = function()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕһ⁥⁥⁥⁥󠀗󠀕󠀕󠀕󠀕󠀖i⁥⁥⁥⁥󠀗󠀕󠀕󠀕t", "All")
-    end
-})
-
-  Tab:AddButton({
-    Name = "sexy",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕеху", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "sex",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕ⁥⁥⁥е⁥⁥⁥х⁥⁥⁥", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "titties",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("t⁥⁥⁥⁥⁥⁥і⁥⁥⁥⁥⁥⁥t⁥⁥⁥⁥⁥⁥t⁥⁥⁥⁥⁥⁥і⁥⁥⁥⁥⁥⁥е⁥⁥⁥⁥⁥⁥ѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "thots",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("t󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖h⁥⁥⁥󠀗󠀕󠀕оt󠀗󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥ѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "thot",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("t󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖h⁥⁥⁥󠀗󠀕󠀕оt", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "tits",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("t󠀗󠀕󠀕󠀕󠀕󠀕i⁥⁥⁥⁥t⁥⁥⁥⁥ѕ", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "tit",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥⁥t󠀗󠀕⁥⁥⁥⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕і⁥⁥⁥⁥t", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "virginity",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("v￰￰￰￰￰￰і￰￰￰￰￰￰￰￰r￰￰￰￰￰￰￰￰g￰￰￰￰￰￰￰￰￰і￰￰￰￰￰￰￰￰n￰￰￰￰￰￰￰і￰￰￰￰t￰￰￰у", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "virgins",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("v󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗ir⁥⁥⁥⁥󠀗󠀕󠀕󠀕󠀕󠀕gi󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖ns", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "virgin",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("v󠀕￰￰￰￰￰￰󠀘і󠀖￰￰￰￰￰￰￰￰󠀘r󠀕￰￰￰￰￰￰￰￰󠀖g󠀖￰￰￰￰￰￰￰￰￰󠀘і󠀘￰￰￰￰￰￰￰￰n", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "vagina",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥v󠀗󠀕󠀕󠀕󠀕⁥⁥⁥⁥󠀕󠀖⁥⁥⁥⁥а󠀗󠀕󠀕󠀕g⁥⁥⁥⁥і⁥⁥⁥⁥󠀗󠀕n⁥⁥⁥⁥󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖a", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "whore",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("w⁥⁥⁥һ⁥⁥⁥о⁥⁥⁥r⁥⁥⁥е", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "weed",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥⁥⁥w⁥󠀕⁥eed", "All")
-ResetFilter()
-    end
-})
 
 local Section = Tab:AddSection({
     Name = "Uppercase/Capital A-Z"
@@ -1774,7 +910,6 @@ local Section = Tab:AddSection({
   Tab:AddButton({
     Name = "ASS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("АЅЅ", "All")
 ResetFilter()
     end
@@ -1783,7 +918,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "ASSHOLE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("АЅЅНОLЕ", "All")
 ResetFilter()
     end
@@ -1792,7 +926,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "ANUS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("АΝUЅ", "All")
 ResetFilter()
     end
@@ -1801,7 +934,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "ARSE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("А⁥⁥⁥R⁥⁥⁥⁥⁥󠀕󠀕󠀕Ѕ⁥⁥⁥⁥⁥⁥Е", "All")
 ResetFilter()
     end
@@ -1810,7 +942,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "ANAL",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("АΝ⁥⁥⁥⁥⁥⁥АL", "All")
 ResetFilter()
     end
@@ -1819,7 +950,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BASTARD",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ВАЅТАRD", "All")
 ResetFilter()
     end
@@ -1828,7 +958,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BONDAGE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("В󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥О󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥Ν󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥D󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥АGЕ", "All")
 ResetFilter()
     end
@@ -1837,7 +966,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BONER",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥В⁥⁥O⁥⁥N⁥⁥Е⁥⁥R", "All")
 ResetFilter()
     end
@@ -1846,7 +974,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BITCHES",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("В￰￰￰￰￰￰￰I￰￰￰￰￰￰Т￰￰￰￰￰￰СНЕS", "All")
 ResetFilter()
     end
@@ -1855,7 +982,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BITCH",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("В￰￰￰￰￰￰￰I￰￰￰￰￰￰Т￰￰￰￰￰￰СН", "All")
 ResetFilter()
     end
@@ -1864,7 +990,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BLOWJOB",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("В󠀕󠀕󠀕󠀕󠀕󠀖LОW󠀕󠀕󠀕󠀕󠀕󠀖ЈО󠀕󠀕󠀕󠀕󠀕󠀖В", "All")
 ResetFilter()
     end
@@ -1873,7 +998,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BULLSHIT",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("В󠀖󠀖⁥⁥⁥⁥UL󠀖󠀖⁥⁥⁥⁥LЅН󠀖󠀖⁥⁥⁥⁥ӀТ", "All")
 ResetFilter()
     end
@@ -1882,7 +1006,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BOOBS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ВООВS", "All")
 ResetFilter()
     end
@@ -1891,7 +1014,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BOOB",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ВООВ", "All")
 ResetFilter()
     end
@@ -1900,7 +1022,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BUTTHOLE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ВUТТ⁥⁥⁥⁥НOLЕ", "All")
 ResetFilter()
     end
@@ -1909,7 +1030,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BUTT",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ВUТТ", "All")
 ResetFilter()
     end
@@ -1918,7 +1038,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BOOTY",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ВООТΥ", "All")
 ResetFilter()
     end
@@ -1927,7 +1046,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BEANER",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("В󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥ЕА󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥Ν󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥Е󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥R", "All")
 ResetFilter()
     end
@@ -1936,7 +1054,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "COCAINE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥ОСА󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥ӀΝ󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥Е", "All")
 ResetFilter()
     end
@@ -1945,7 +1062,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "CUNTS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("СU⁥⁥⁥⁥⁥⁥⁥⁥NТЅ", "All")
 ResetFilter()
     end
@@ -1954,7 +1070,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "CUNT",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("СU⁥⁥⁥⁥⁥⁥⁥⁥NТ", "All")
 ResetFilter()
     end
@@ -1963,7 +1078,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "COOCHIES",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С󠀕󠀕󠀕O󠀕󠀕󠀕󠀕⁥⁥⁥⁥ОСН󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥Ӏ󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥ЕS", "All")
 ResetFilter()
     end
@@ -1972,7 +1086,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "COOCHIE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С󠀕󠀕󠀕O󠀕󠀕󠀕󠀕⁥⁥⁥⁥ОСН󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥Ӏ󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥Е", "All")
 ResetFilter()
     end
@@ -1981,7 +1094,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "CUM",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("СUМ", "All")
 ResetFilter()
     end
@@ -1990,7 +1102,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "CREAMPIE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥R󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥Е󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥АМ󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥PIE", "All")
 ResetFilter()
     end
@@ -1999,7 +1110,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "COCK",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("СОСK", "All")
 ResetFilter()
     end
@@ -2008,7 +1118,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "CUCKOLD",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥U󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥С󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥KOLD", "All")
 ResetFilter()
     end
@@ -2017,7 +1126,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "CUCK",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥U󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥С󠀕󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥K", "All")
 ResetFilter()
     end
@@ -2026,7 +1134,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "DISCORD",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("DӀЅСОRD", "All")
 ResetFilter()
     end
@@ -2035,7 +1142,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "DUMBASS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("D󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀕󠀕UM⁥⁥⁥⁥⁥⁥⁥⁥⁥BАЅЅ", "All")
 ResetFilter()
     end
@@ -2044,7 +1150,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "DILDO",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("D⁥󠀕󠀕󠀕󠀕⁥⁥Ӏ⁥󠀕󠀕󠀕󠀕⁥⁥L⁥󠀕󠀕󠀕󠀕⁥⁥DО", "All")
 ResetFilter()
     end
@@ -2053,7 +1158,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "DICKHEAD",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("D⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥IСΚНЕ󠀕⁥⁥󠀕AD", "All")
 ResetFilter()
     end
@@ -2062,7 +1166,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "DICK",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("D⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥IСΚ", "All")
 ResetFilter()
     end
@@ -2071,7 +1174,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "DAMN",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("DАМΝ", "All")
 ResetFilter()
     end
@@ -2080,7 +1182,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "FAGGOT",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("F󠀕󠀖󠀗󠀘￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰󠀕󠀖󠀗󠀘А󠀕󠀖󠀗󠀘󠀕󠀖￰￰￰￰￰￰󠀕G⁥⁥󠀖󠀗󠀘󠀖󠀗󠀘⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀘󠀘G󠀖󠀗󠀘󠀖󠀗󠀘￰￰￰￰￰￰￰О󠀖󠀗󠀘￰￰￰￰￰󠀖󠀗Т", "All")
 ResetFilter()
     end
@@ -2090,7 +1191,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "FATASS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("F⁥⁥⁥А⁥⁥⁥ТА⁥⁥⁥Ѕ⁥⁥⁥Ѕ", "All")
 ResetFilter()
     end
@@ -2098,7 +1198,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "FEMBOYS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("FЕМВОΥЅ", "All")
 ResetFilter()
     end
@@ -2107,7 +1206,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "FEMBOY",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("FЕМВОΥ", "All")
 ResetFilter()
     end
@@ -2116,7 +1214,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "FUCKERS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("󠀕󠀕F⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖⁥⁥⁥⁥⁥⁥⁥UС⁥⁥⁥ΚЕ⁥⁥⁥R󠀕󠀕󠀕󠀕S", "All")
 ResetFilter()
     end
@@ -2125,7 +1222,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "FUCKER",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("󠀕󠀕F⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖⁥⁥⁥⁥⁥⁥⁥UC⁥⁥⁥ΚЕ⁥⁥⁥R", "All")
 ResetFilter()
     end
@@ -2134,7 +1230,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "FUCKED",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("F⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖⁥⁥⁥⁥⁥⁥⁥UС⁥⁥⁥ΚЕ⁥⁥⁥D", "All")
 ResetFilter()
     end
@@ -2143,7 +1238,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "FUCK",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("F⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥UСΚ", "All")
 ResetFilter()
     end
@@ -2152,7 +1246,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "HITLER",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("НӀ⁥⁥⁥⁥⁥⁥⁥⁥ТL⁥⁥⁥⁥⁥⁥⁥⁥Е⁥⁥R", "All")
 ResetFilter()
     end
@@ -2162,7 +1255,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "HENTAI",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("НЕ⁥⁥⁥⁥Ν⁥ТАӀ", "All")
 ResetFilter()
     end
@@ -2171,7 +1263,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "HORNY",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("НОRNY", "All")
 ResetFilter()
     end
@@ -2180,7 +1271,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "HOES",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("НОЕЅ", "All")
 ResetFilter()
     end
@@ -2189,7 +1279,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "HOE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("НОЕ", "All")
 ResetFilter()
     end
@@ -2198,7 +1287,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "KYS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ΚΥЅ", "All")
 ResetFilter()
     end
@@ -2207,7 +1295,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "LMFAO",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("LМFАО", "All")
 ResetFilter()
     end
@@ -2216,7 +1303,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "LMAO",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("LМАО", "All")
 ResetFilter()
     end
@@ -2225,7 +1311,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "MOTHERFUCKER",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("МО󠀕󠀕󠀕󠀖󠀖ТНЕ󠀕󠀕󠀕󠀖󠀖R󠀕󠀕F⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖⁥⁥⁥⁥⁥⁥⁥UC⁥⁥⁥ΚЕ⁥⁥⁥R", "All")
 ResetFilter()
     end
@@ -2234,7 +1319,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "MASTURBATE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("МАЅТURВАТΕ", "All")
 ResetFilter()
     end
@@ -2244,17 +1328,23 @@ ResetFilter()
   Tab:AddButton({
     Name = "METH",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("МETH", "All")
 ResetFilter()
     end
 })
 
   Tab:AddButton({
-    Name = "NAKED",
+    Name = "NIGGER",
     Callback = function()
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ν󠀕󠀕󠀕󠀕󠀕⁥Ӏ󠀕󠀕󠀕󠀕󠀕G󠀕󠀕󠀕G󠀕󠀕󠀕󠀕󠀕Е⁥⁥⁥⁥R", "All")
 ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ΝΑKΕD", "All")
+    end
+})
+
+  Tab:AddButton({
+    Name = "NIGGA",
+    Callback = function()
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ν⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥Ӏ󠀕󠀖󠀗󠀕󠀖⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥G⁥⁥⁥⁥GА", "All")
 ResetFilter()
     end
 })
@@ -2262,17 +1352,22 @@ ResetFilter()
   Tab:AddButton({
     Name = "NEGRO",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("NE󠀕󠀕⁥⁥󠀕G󠀕󠀖⁥⁥󠀕R󠀕󠀕󠀕⁥⁥󠀕󠀕󠀖󠀕O", "All")
 ResetFilter()
     end
 })
 
+  Tab:AddButton({
+    Name = "NAKED",
+    Callback = function()
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ΝΑKΕD", "All")
+ResetFilter()
+    end
+})
 
   Tab:AddButton({
     Name = "NUDES",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ΝUDЕЅ", "All")
 ResetFilter()
     end
@@ -2281,7 +1376,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "NUDE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ν󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕U󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕D󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕Е", "All")
 ResetFilter()
     end
@@ -2290,7 +1384,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "NIPPLES",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ν󠀕󠀕⁥Ӏ󠀕󠀕⁥⁥󠀕P⁥⁥P󠀕󠀖⁥⁥󠀕L󠀕󠀕󠀕⁥⁥󠀕󠀕󠀖󠀕Е󠀖⁥⁥Ѕ", "All")
 ResetFilter()
     end
@@ -2299,7 +1392,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "NIPPLE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ν󠀕󠀕⁥Ӏ󠀕󠀕⁥⁥󠀕P⁥⁥P󠀕󠀖⁥⁥󠀕L󠀕󠀕󠀕⁥⁥󠀕󠀕󠀖󠀕Е󠀖⁥⁥", "All")
 ResetFilter()
     end
@@ -2308,7 +1400,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "OMFG",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ОM⁥⁥⁥⁥⁥⁥⁥⁥FG", "All")
 ResetFilter()
     end
@@ -2317,7 +1408,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "PENIS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("PEN⁥⁥ӀS", "All")
 ResetFilter()
     end
@@ -2327,7 +1417,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "PUSSIES",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Р⁥⁥⁥U⁥⁥⁥Ѕ⁥⁥⁥S⁥⁥⁥Ӏ⁥⁥⁥Е⁥⁥⁥Ѕ", "All")
 ResetFilter()
     end
@@ -2336,7 +1425,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "PUSSY",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Р󠀕󠀕󠀕󠀖⁥⁥⁥⁥⁥󠀖󠀗󠀕U⁥⁥⁥⁥⁥Ѕ󠀕󠀕󠀕󠀖⁥⁥⁥⁥⁥󠀖󠀗󠀕S󠀕⁥⁥⁥⁥⁥󠀕󠀖󠀖󠀗󠀕Υ", "All")
 ResetFilter()
     end
@@ -2345,7 +1433,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "PORNHUB",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥Р⁥⁥⁥󠀕⁥⁥󠀕О⁥⁥R⁥⁥⁥⁥⁥󠀕⁥⁥󠀕N⁥⁥⁥󠀕󠀕Н⁥⁥⁥⁥⁥󠀕󠀕UВ", "All")
 ResetFilter()
     end
@@ -2354,7 +1441,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "PORN",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("РО󠀕⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕RΝ", "All")
 ResetFilter()
     end
@@ -2363,7 +1449,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "PISS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("РӀЅЅ", "All")
 ResetFilter()
     end
@@ -2372,8 +1457,7 @@ ResetFilter()
   Tab:AddButton({
     Name = "RETARD",
     Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("R⁥⁥⁥⁥⁥⁥⁥E⁥⁥⁥⁥⁥⁥T⁥⁥⁥⁥⁥⁥⁥A⁥⁥⁥⁥⁥⁥R⁥⁥⁥⁥⁥⁥⁥D", "All")
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("󠀕￰￰￰￰￰￰󠀕￰￰￰￰󠀕R󠀕￰￰￰󠀕󠀕󠀕󠀕󠀕￰￰￰￰￰￰󠀕󠀕󠀕󠀕󠀕￰￰￰󠀕⁥Е￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰󠀕󠀕⁥Т󠀕￰󠀕󠀕󠀕￰￰￰￰￰￰￰￰󠀕󠀕￰￰󠀕⁥A￰￰￰￰￰󠀕￰￰￰￰￰￰￰￰󠀕￰￰￰￰￰￰￰￰￰R󠀕󠀕D", "All")
 ResetFilter()
     end
 })
@@ -2381,7 +1465,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "RAPE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("RАРЕ", "All")
 ResetFilter()
     end
@@ -2391,7 +1474,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "SHIT",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ЅH⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥IT", "All")
 ResetFilter()
     end
@@ -2400,7 +1482,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "SLUT",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ЅL⁥⁥⁥⁥UТ", "All")
 ResetFilter()
     end
@@ -2410,7 +1491,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "SLAVE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ЅLА󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖VE", "All")
 ResetFilter()
     end
@@ -2419,7 +1499,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "SEX",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ЅЕХ", "All")
 ResetFilter()
     end
@@ -2429,7 +1508,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "TITTIES",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ТIТТIES", "All")
 ResetFilter()
     end
@@ -2438,7 +1516,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "TITS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ТIТЅ", "All")
 ResetFilter()
     end
@@ -2448,7 +1525,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "THOTS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ТН⁥⁥⁥⁥⁥ОТЅ", "All")
 ResetFilter()
     end
@@ -2457,7 +1533,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "THOT",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ТН⁥⁥⁥⁥⁥ОТ", "All")
 ResetFilter()
     end
@@ -2466,7 +1541,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "VIRGINITY",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("V￰￰￰￰￰￰Ӏ￰￰￰￰￰￰￰￰R￰￰￰￰￰￰￰￰G￰￰￰￰￰￰￰￰￰Ӏ￰￰￰￰￰￰￰￰ΝITY", "All")
 ResetFilter()
     end
@@ -2475,18 +1549,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "VIRGINS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("V￰￰￰￰￰￰I￰￰￰￰￰￰￰￰R￰￰￰￰￰￰￰￰G￰￰￰￰￰￰￰￰￰INS", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "VIRGIN",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("V￰￰￰￰￰￰I￰￰￰￰￰￰￰￰R￰￰￰￰￰￰￰￰G￰￰￰￰￰￰￰￰￰I￰￰￰￰￰￰￰￰N", "All")
 ResetFilter()
     end
@@ -2495,17 +1565,7 @@ ResetFilter()
   Tab:AddButton({
     Name = "VAGINA",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("V￰￰￰￰￰￰А￰￰￰￰￰￰￰￰G￰￰￰￰￰￰￰￰Ӏ￰￰￰￰￰￰￰￰￰N￰￰￰￰￰￰￰￰А", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "XXX",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("X⁥⁥⁥⁥XX", "All")
 ResetFilter()
     end
 })
@@ -2513,12 +1573,18 @@ ResetFilter()
   Tab:AddButton({
     Name = "WHORE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("W⁥⁥⁥Н⁥⁥⁥О⁥⁥⁥R⁥⁥⁥Е", "All")
 ResetFilter()
     end
 })
 
+  Tab:AddButton({
+    Name = "XXX",
+    Callback = function()
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("X⁥⁥⁥⁥XX", "All")
+ResetFilter()
+    end
+})
 
 local Tab = Window:MakeTab({
     Name = "Sentences",
@@ -2527,13 +1593,276 @@ local Tab = Window:MakeTab({
 })
 
 local Section = Tab:AddSection({
+    Name = "Extra"
+})
+Tab:AddParagraph("SEX BOT (Beta)","Fuck a player!")
+
+local UsernameTextBox = Tab:AddTextbox({
+    Name = "Username/Display Name:",
+    Default = "",
+    TextDisappear = false,
+    Callback = function(Value)
+        local selectedAnimation = tonumber(DropdownValue)
+
+        if selectedAnimation == 1 then
+            bangAnimation(Value)
+        elseif selectedAnimation == 2 then
+            bangAnimation2(Value)
+        else
+            Orion:MakeNotification({
+                Name = "Error",
+                Content = "You must select an animation type before entering a username.",
+                Time = 5
+            })
+        end
+    end
+})
+
+local Dropdown = Tab:AddDropdown({
+    Name = "Animation Type",
+    Default = "Select Animation",
+    Options = {"1", "2"},
+    Callback = function(Value)
+        DropdownValue = Value
+    end
+})
+
+-- Function to find a player based on the entered name
+local function findPlayer(name)
+    local lowerName = string.lower(name)
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if string.find(string.lower(player.Name), lowerName) or string.find(string.lower(player.DisplayName), lowerName) then
+            return player
+        end
+    end
+    return nil
+end
+
+local animationTrack = nil
+local animationConnection = nil
+local followConnection = nil
+local animationTrack2 = nil
+local animationConnection2 = nil
+local floatConnection = nil
+local bangDied = nil
+local bang = nil
+local bangAnim = nil
+local bangLoop = nil
+
+function bangAnimation(playerName)
+    local player = findPlayer(playerName)
+    if player then
+        -- Animation 1 script
+        local localPlayer = game.Players.LocalPlayer
+        local localCharacter = localPlayer.Character
+        local localHumanoid = localCharacter:FindFirstChildOfClass("Humanoid")
+
+        if localHumanoid then
+            local animation = Instance.new("Animation")
+            animation.AnimationId = localHumanoid.RigType == Enum.HumanoidRigType.R15 and "rbxassetid://5918726674" or "rbxassetid://148840371"
+            animationTrack = localHumanoid:LoadAnimation(animation)
+            animationTrack:Play()
+            animationTrack:AdjustSpeed(10)
+
+            animationConnection = localHumanoid.Died:Connect(stopAnimations)
+
+            followConnection = game:GetService("RunService").Stepped:Connect(function()
+                if localCharacter and player.Character then
+                    local offset = CFrame.new(0, 0, 0.5)
+                    local targetCFrame = player.Character.HumanoidRootPart.CFrame
+                    local localCFrame = targetCFrame * offset
+                    localCharacter.HumanoidRootPart.CFrame = localCFrame
+                end
+            end)
+
+            -- Send chat message for Animation 1
+          ResetFilter()
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С￰￰￰￰￰￰￰М￰￰￰￰￰￰￰ОΝВ￰￰￰￰￰￰￰I￰￰￰￰￰￰Т￰￰￰￰￰￰СНЅUСΚТНАТCО￰￰￰￰￰￰￰СΚ", "All")
+           wait(1)
+          ResetFilter()
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ВЕАGООDН󠀖󠀗󠀘￰￰￰￰О￰￰￰￰ЕFОRРА￰￰￰￰РӀ..YЕ￰￰￰￰АН..ТНАТЅӀТ..", "All")
+           wait(2)
+          ResetFilter()
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("НОLYЅН󠀘󠀖󠀗󠀘￰￰￰￰￰ӀТIА󠀕󠀖󠀗МАВ󠀕󠀖󠀗OU￰￰￰TT󠀕󠀖󠀗OС￰󠀕󠀖󠀗󠀕󠀖󠀗￰￰U￰￰￰М", "All")
+           wait(2)
+          ResetFilter()
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Н⁥⁥⁥⁥⁥⁥О⁥⁥⁥L⁥⁥⁥⁥⁥⁥ΥЅ⁥⁥⁥⁥⁥⁥Н⁥⁥⁥󠀕󠀕󠀕󠀖󠀕⁥⁥⁥⁥⁥ӀТ⁥⁥⁥Т⁥⁥⁥Т⁥⁥⁥Т", "All")
+           wait(2)
+          ResetFilter()
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("IА󠀕󠀖󠀗МАВ󠀕󠀖󠀗OU￰￰￰TT󠀕󠀖󠀗OВU￰￰￰ΖΖМΥF⁥⁥⁥А⁥⁥⁥ТА⁥⁥⁥Ѕ⁥⁥⁥ЅСОСK", "All")
+           wait(2)
+          ResetFilter()
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("*с⁥⁥⁥⁥umѕ аӏоt*", "All")
+          ResetFilter()
+
+            -- Stop the animation after 10 seconds
+            wait(1)
+            stopAnimation(animationTrack, animationConnection, followConnection)
+        end
+    else
+        Orion:MakeNotification({
+            Name = "Error",
+            Content = "Player not found.",
+            Time = 5
+        })
+    end
+end
+
+function bangAnimation2(playerName)
+    local player = findPlayer(playerName)
+    if player then
+        -- Animation 2 script
+        local localPlayer = game.Players.LocalPlayer
+        local localCharacter = localPlayer.Character
+        local localHumanoid = localCharacter:FindFirstChildOfClass("Humanoid")
+        if localHumanoid then
+            local animation = Instance.new("Animation")
+            animation.AnimationId = localHumanoid.RigType == Enum.HumanoidRigType.R15 and "rbxassetid://5918726674" or "rbxassetid://148840371"
+            animationTrack2 = localHumanoid:LoadAnimation(animation)
+            animationTrack2:Play()
+            animationTrack2:AdjustSpeed(10)
+
+            animationConnection2 = animationTrack2.KeyframeReached:Connect(function(keyframeName)
+                if keyframeName == "End" then
+                    local targetHead = player.Character:FindFirstChild("Head")
+                    if targetHead then
+                        local torsoOffset = localCharacter:FindFirstChild("Torso") or localCharacter:FindFirstChild("UpperTorso")
+                        if torsoOffset then
+                            local offset = CFrame.new(0, targetHead.Size.Y - torsoOffset.Size.Y + 1, -1) * CFrame.Angles(0, math.pi, 0)
+                            localCharacter.HumanoidRootPart.CFrame = targetHead.CFrame * offset
+                        end
+                    end
+                end
+            end)
+
+            animationConnection2 = localHumanoid.Died:Connect(stopAnimations)
+
+            floatConnection = game:GetService("RunService").Stepped:Connect(function()
+                localCharacter.HumanoidRootPart.Anchored = true
+                localCharacter.HumanoidRootPart.CanCollide = false
+            end)
+
+            -- Send chat message for Animation 2
+          ResetFilter()
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("󠀕󠀕󠀕Е⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀖󠀕⁥⁥⁥А⁥⁥⁥⁥⁥⁥⁥⁥ТТ󠀕󠀕󠀕НАТР⁥⁥⁥󠀕󠀕󠀕󠀖󠀕⁥⁥⁥⁥⁥U󠀕󠀕󠀕󠀖󠀕S⁥⁥⁥⁥⁥⁥⁥⁥Ѕ⁥⁥󠀕󠀕󠀕󠀖󠀕⁥⁥⁥⁥⁥⁥YВ󠀕󠀕󠀕󠀖󠀕Ӏ󠀕󠀕󠀕󠀖󠀕Т⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀖󠀕⁥⁥⁥СН", "All")
+          ResetFilter()
+           wait(1)
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("MMHMYEAH..", "All")
+          ResetFilter()
+           wait()
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("DADDY", "All")
+          ResetFilter()
+           wait(3)
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("НОLYЅН󠀘󠀖󠀗󠀘￰￰￰￰￰ӀТIА󠀕󠀖󠀗МАВ󠀕󠀖󠀗OU￰￰￰TT󠀕󠀖󠀗OС￰󠀕󠀖󠀗󠀕󠀖󠀗￰￰U￰￰￰М", "All")
+          ResetFilter()
+           wait(2)
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Н⁥⁥⁥⁥⁥⁥О⁥⁥⁥L⁥⁥⁥⁥⁥⁥ΥЅ⁥⁥⁥⁥⁥⁥Н⁥⁥⁥󠀕󠀕󠀕󠀖󠀕⁥⁥⁥⁥⁥ӀТ⁥⁥⁥Т⁥⁥⁥Т⁥⁥⁥Т", "All")
+          ResetFilter()
+           wait(3)
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("*с⁥⁥⁥⁥umѕ аӏоt*", "All")
+          ResetFilter()
+
+            -- Follow the target instead of teleporting
+            local followConnection2 = game:GetService("RunService").Stepped:Connect(function()
+                if localCharacter and player.Character then
+                    local targetPosition = player.Character.HumanoidRootPart.Position
+                    local currentPosition = localCharacter.HumanoidRootPart.Position
+                    local direction = (targetPosition - currentPosition).Unit
+                    local speed = 10 -- Adjust this value to control the speed of following
+                    local newPosition = currentPosition + direction * speed * game:GetService("RunService").Stepped:Wait()
+                    localCharacter.HumanoidRootPart.CFrame = CFrame.new(newPosition, targetPosition)
+                end
+            end)
+
+            -- Stop the animation after 10 seconds
+            wait(1)
+            stopAnimation2(animationTrack2, animationConnection2, floatConnection, followConnection2)
+        end
+    else
+        Orion:MakeNotification({
+            Name = "Error",
+            Content = "Player not found.",
+            Time = 5
+        })
+    end
+end
+
+function stopAnimations()
+    stopAnimation(animationTrack, animationConnection, followConnection)
+    stopAnimation2(animationTrack2, animationConnection2, floatConnection, nil)
+end
+
+function stopAnimation(track, connection, followConnection)
+    if track then
+        track:Stop()
+        track = nil
+    end
+    if connection then
+        connection:Disconnect()
+        connection = nil
+    end
+    if followConnection then
+        followConnection:Disconnect()
+        followConnection = nil
+    end
+end
+
+function stopAnimation2(track, connection, floatConnection, followConnection)
+    if track then
+        track:Stop()
+        track = nil
+    end
+    if connection then
+        connection:Disconnect()
+        connection = nil
+    end
+    if floatConnection then
+        floatConnection:Disconnect()
+        floatConnection = nil
+        local localPlayer = game.Players.LocalPlayer
+        local localCharacter = localPlayer.Character
+        if localCharacter then
+            localCharacter.HumanoidRootPart.Anchored = false
+            localCharacter.HumanoidRootPart.CanCollide = true
+        end
+    end
+    if followConnection then
+        followConnection:Disconnect()
+        followConnection = nil
+    end
+end
+
+function stopAnimationWithCode(args, speaker)
+    if bangDied then
+        bangDied:Disconnect()
+        bangDied = nil
+    end
+
+    if bang then
+        bang:Stop()
+        bang = nil
+    end
+
+    if bangAnim then
+        bangAnim:Destroy()
+        bangAnim = nil
+    end
+
+    if bangLoop then
+        bangLoop:Disconnect()
+        bangLoop = nil
+    end
+end
+
+Tab:AddParagraph("IMPORTANT","Put Animation: 1 if you're a Male and put Animation: 2 if you're a Female! (Animation 2 isn't the best right now)")
+
+local Section = Tab:AddSection({
     Name = "lowercase A-Z"
 })
 
   Tab:AddButton({
     Name = "anal sex pls",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("аn⁥⁥⁥⁥аl ѕ⁥⁥⁥е⁥⁥⁥х⁥⁥⁥ pls", "All")
 ResetFilter()
     end
@@ -2542,7 +1871,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "anal sex",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("аn⁥⁥⁥⁥аl ѕ⁥⁥⁥е⁥⁥⁥х", "All")
 ResetFilter()
     end
@@ -2552,7 +1880,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "ass sex pls",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("а⁥⁥⁥⁥ѕѕs⁥⁥⁥⁥ехpӏs", "All")
 ResetFilter()
     end
@@ -2561,7 +1888,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Boom cockshot!",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("В⁥⁥⁥⁥о⁥⁥⁥⁥о⁥⁥⁥⁥m⁥⁥⁥⁥ с⁥⁥⁥⁥о⁥⁥⁥⁥с⁥⁥⁥⁥k⁥⁥⁥⁥ѕ⁥⁥⁥⁥h⁥⁥⁥⁥о⁥⁥⁥⁥t⁥⁥⁥⁥!", "All")
 ResetFilter()
     end
@@ -2570,7 +1896,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "boner alert!",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("b⁥⁥⁥o⁥⁥⁥n⁥⁥⁥е⁥⁥⁥r⁥⁥⁥ ⁥⁥⁥а⁥⁥⁥ӏ⁥⁥⁥е⁥⁥⁥r⁥⁥⁥t⁥⁥⁥!", "All")
 ResetFilter()
     end
@@ -2579,7 +1904,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "butt sex",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("bu⁥⁥⁥⁥⁥⁥⁥⁥tt ѕ⁥⁥⁥еx", "All")
 ResetFilter()
     end
@@ -2588,7 +1912,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "big cock",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("b⁥ig со⁥⁥⁥сk", "All")
 ResetFilter()
     end
@@ -2597,7 +1920,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "boobs or ass?",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("b⁥⁥⁥о⁥⁥⁥о⁥⁥⁥b⁥⁥⁥ѕ⁥⁥⁥ ⁥⁥⁥о⁥⁥⁥r⁥⁥⁥ ⁥⁥⁥а⁥⁥⁥ѕ⁥⁥⁥ѕ?", "All")
 ResetFilter()
     end
@@ -2606,7 +1928,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Big ass thighs",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Віg аѕѕ thіghѕ", "All")
 ResetFilter()
     end
@@ -2615,7 +1936,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "big black cock",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("big black сосk", "All")
 ResetFilter()
     end
@@ -2624,7 +1944,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Big ass",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Віg аѕѕ", "All")
 ResetFilter()
     end
@@ -2633,7 +1952,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Be my wife!",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ве mу wіfе!", "All")
 ResetFilter()
     end
@@ -2653,7 +1971,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "cock sucker",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("сосk ѕuсkеr", "All")
 ResetFilter()
     end
@@ -2664,7 +1981,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Cum on me please!",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С⁥⁥⁥⁥umonme please!", "All")
 ResetFilter()
     end
@@ -2673,7 +1989,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "cum please",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥⁥um рӏеаѕе", "All")
 ResetFilter()
     end
@@ -2683,7 +1998,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "cut yourself.",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("сutyоurself.", "All")
 ResetFilter()
     end
@@ -2692,7 +2006,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "child porn",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("сhild роrn", "All")
 ResetFilter()
     end
@@ -2701,7 +2014,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Cock incoming!",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("C󠀕󠀕󠀕󠀕о⁥⁥⁥⁥⁥⁥⁥⁥⁥сki⁥⁥󠀕󠀕󠀕󠀕⁥nс⁥⁥󠀕󠀕󠀕󠀕⁥о󠀕󠀕󠀕󠀕m󠀕󠀕󠀕󠀕i󠀕󠀕󠀕󠀕n⁥⁥⁥g!", "All")
 ResetFilter()
     end
@@ -2710,7 +2022,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Cock in bedroom",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С󠀕󠀕󠀕󠀕о⁥⁥⁥⁥⁥⁥⁥⁥⁥с󠀕⁥⁥kі⁥󠀕󠀕󠀕󠀕⁥⁥nb⁥⁥е󠀕󠀕󠀕󠀕dr⁥ооm", "All")
 ResetFilter()
     end
@@ -2719,7 +2030,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Cock or Boobs",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С⁥⁥⁥о⁥⁥⁥с⁥⁥⁥k⁥⁥⁥ ⁥⁥⁥о⁥⁥⁥r⁥⁥⁥ ⁥⁥⁥В⁥⁥⁥о⁥⁥⁥о⁥⁥⁥b⁥⁥⁥ѕ⁥⁥⁥?", "All")
 ResetFilter()
     end
@@ -2728,7 +2038,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "damn you got a long schlong daddy",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("d⁥⁥⁥а⁥⁥⁥m⁥⁥⁥n⁥⁥⁥ ⁥⁥⁥у⁥⁥⁥о⁥⁥⁥u⁥⁥⁥ ⁥⁥⁥g⁥⁥⁥о⁥⁥⁥t⁥⁥⁥ ⁥⁥⁥а⁥⁥⁥ ⁥⁥⁥ӏ⁥⁥⁥о⁥⁥⁥n⁥⁥⁥g⁥⁥⁥ ⁥⁥⁥ѕ⁥⁥⁥с⁥⁥⁥һ⁥⁥⁥ӏ⁥⁥⁥о⁥⁥⁥n⁥⁥⁥g⁥⁥⁥ ⁥⁥⁥d⁥⁥⁥а⁥⁥⁥d⁥⁥⁥d⁥⁥⁥у", "All")
 ResetFilter()
     end
@@ -2737,7 +2046,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "dirty hoe",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("d⁥⁥⁥⁥⁥⁥i⁥⁥⁥⁥rt⁥⁥⁥у⁥⁥h⁥⁥⁥⁥⁥о⁥⁥⁥⁥⁥⁥⁥e", "All")
 ResetFilter()
     end
@@ -2746,7 +2054,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "fuck yourself",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("󠀕⁥⁥󠀕f⁥⁥⁥⁥⁥⁥󠀕󠀕⁥⁥⁥⁥⁥⁥uс󠀕󠀕⁥⁥⁥⁥󠀕k󠀕󠀕⁥⁥y󠀕󠀕⁥⁥⁥⁥⁥⁥⁥󠀕о⁥⁥u⁥⁥󠀕⁥r⁥⁥󠀕⁥⁥⁥⁥⁥ѕ⁥⁥⁥󠀕⁥⁥⁥⁥󠀕󠀕󠀕e⁥⁥l⁥⁥f", "All")
 ResetFilter()
     end
@@ -2755,7 +2062,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "free porn",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("frее роrn", "All")
 ResetFilter()
     end
@@ -2765,7 +2071,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "fatass hoe",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("f󠀘󠀕󠀖󠀗аt￰￰￰a￰￰￰￰￰￰￰￰￰￰￰￰⁥ѕ￰￰ѕһ⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀘󠀕󠀖󠀗ое", "All")
 ResetFilter()
     end
@@ -2774,7 +2079,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "fat ass",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("f󠀘󠀕󠀖󠀗аt ￰￰￰a￰￰￰￰￰￰￰￰￰￰￰￰⁥ѕs", "All")
 ResetFilter()
     end
@@ -2783,7 +2087,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "go end your own life.",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("gо еnd уоur оwn lіfе.", "All")
 ResetFilter()
     end
@@ -2792,7 +2095,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Hail Hitler",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("На⁥⁥⁥⁥⁥iӏНi⁥⁥⁥⁥⁥⁥⁥⁥tӏ⁥⁥⁥⁥⁥⁥⁥⁥е⁥⁥r", "All")
 ResetFilter()
     end
@@ -2803,7 +2105,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "hardcore sex",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("h⁥⁥⁥а⁥⁥⁥r⁥⁥⁥d⁥⁥⁥с⁥⁥⁥о⁥⁥⁥r⁥⁥⁥е⁥⁥⁥ ѕ⁥⁥⁥е⁥⁥⁥х⁥⁥⁥", "All")
 ResetFilter()
     end
@@ -2812,7 +2113,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "I eat pussy",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("I⁥⁥⁥⁥⁥⁥ е⁥⁥⁥⁥⁥⁥⁥аt ⁥⁥р⁥⁥⁥u⁥⁥⁥⁥s⁥⁥sу", "All")
 ResetFilter()
     end
@@ -2821,7 +2121,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "i love minors",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥⁥і ӏ⁥⁥⁥о⁥⁥⁥v⁥⁥⁥е ⁥⁥⁥m⁥⁥⁥і⁥⁥⁥n⁥⁥⁥о⁥⁥⁥r⁥⁥⁥ѕ", "All")
 ResetFilter()
     end
@@ -2830,7 +2129,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "i love you",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і ӏоvе уоu", "All")
 ResetFilter()
     end
@@ -2841,7 +2139,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "I love cocks",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("I⁥⁥⁥⁥⁥⁥ ӏ⁥⁥о⁥⁥vе ⁥⁥с⁥⁥⁥⁥⁥⁥⁥⁥⁥о⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥с⁥⁥⁥⁥kѕ", "All")
 ResetFilter()
     end
@@ -2850,18 +2147,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "i love boobs",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і⁥⁥⁥ ⁥⁥⁥ӏ⁥⁥⁥о⁥⁥⁥⁥⁥⁥⁥⁥⁥vе bооbѕ", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "i like titties",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і ӏіkе tіttіеs", "All")
 ResetFilter()
     end
@@ -2870,18 +2163,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "im gonna make you pregnant mommy",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("іm gоnnа mаkе уоu рrеgnаnt mоmmу", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "i'm sexy, and you know it",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і'm ѕеху, аnd уου knοw іt", "All")
 ResetFilter()
     end
@@ -2890,18 +2179,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "i'm horny so moan",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і'm һ⁥⁥⁥⁥⁥о󠀕󠀕󠀕󠀕r⁥⁥⁥⁥⁥n⁥⁥⁥⁥⁥у ѕο mοаn", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "i'm mad horny",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і'm mad һ⁥⁥⁥⁥⁥о󠀕󠀕󠀕󠀕r⁥⁥⁥⁥⁥n⁥⁥⁥⁥⁥у", "All")
 ResetFilter()
     end
@@ -2910,7 +2195,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "i'm gonna bang you hard",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і'm gοnnа bаng уοu һаrd", "All")
 ResetFilter()
     end
@@ -2921,7 +2205,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "i'm so hard rn",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і'm ѕо hаrd rn", "All")
 ResetFilter()
     end
@@ -2930,7 +2213,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "i'm so wet daddy",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і'm ѕо wеt daddy", "All")
 ResetFilter()
     end
@@ -2939,7 +2221,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "i'm so wet",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і'm ѕо wеt", "All")
 ResetFilter()
     end
@@ -2949,18 +2230,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "I would like to see some titties",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ι wοuӏd ӏіkе tο ѕее ѕοmе tіttіеs", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "i wanna kms",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і wаnnа kmѕ", "All")
 ResetFilter()
     end
@@ -2969,18 +2246,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "i wanna smash you",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і wаnnа ѕmаѕh уоu", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "i want to drink your breasts",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("і wаnt tо dr⁥⁥⁥⁥⁥іnkуоurbrе⁥⁥⁥⁥⁥а⁥⁥⁥⁥⁥ѕtѕ", "All")
 ResetFilter()
     end
@@ -2989,7 +2262,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "I do sexy things",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("І dо ѕеху thіngѕ", "All")
 ResetFilter()
     end
@@ -3000,7 +2272,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "I banged your girl so hard",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("І bаngеd уоur gіrl ѕо һаrd", "All")
 ResetFilter()
     end
@@ -3009,7 +2280,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "I dont give a shit.",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("I dont give a sһіt.", "All")
 ResetFilter()
     end
@@ -3020,7 +2290,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "I love sex",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("I love ѕеx", "All")
 ResetFilter()
     end
@@ -3029,7 +2298,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "I'll make you pregnant",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("І'ӏӏ mаkе уоu рrеgnаnt", "All")
 ResetFilter()
     end
@@ -3040,7 +2308,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "imagine getting no bitches",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("imagine getting no bitсһеs", "All")
 ResetFilter()
     end
@@ -3049,7 +2316,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "kill yourself",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("kіӏl уоurѕеӏf", "All")
 ResetFilter()
     end
@@ -3058,7 +2324,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "keep moaning",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("keep mоаning", "All")
 ResetFilter()
     end
@@ -3067,18 +2332,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "lets do doggy style",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ӏ⁥⁥⁥е⁥⁥⁥t⁥⁥⁥ѕ⁥⁥⁥⁥⁥⁥d⁥⁥⁥о⁥⁥⁥⁥⁥⁥d⁥⁥⁥о⁥⁥⁥g⁥⁥⁥g⁥⁥⁥у⁥⁥⁥ ⁥⁥⁥ѕ⁥⁥⁥t⁥⁥⁥у⁥⁥⁥ӏ⁥⁥⁥е", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "lets have sex",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥⁥ӏ⁥⁥⁥е⁥⁥⁥t⁥⁥⁥ѕ ⁥⁥⁥һ⁥⁥⁥а⁥⁥⁥v⁥⁥⁥е⁥⁥⁥ ѕ⁥⁥⁥е⁥⁥⁥х⁥⁥⁥", "All")
 ResetFilter()
     end
@@ -3087,18 +2348,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "let me squish those titties",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ӏеt mе ѕqυіѕһ tһοѕе tіttіеs", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "lgbtq+ is related to autism",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ι⁥⁥⁥g⁥⁥⁥b⁥⁥⁥t⁥⁥⁥q⁥⁥⁥+⁥⁥⁥ ⁥⁥⁥і⁥⁥⁥ѕ⁥⁥⁥ ⁥⁥⁥r⁥⁥⁥е⁥⁥⁥l⁥⁥⁥а⁥⁥⁥t⁥⁥⁥е⁥⁥⁥d t⁥⁥⁥о⁥⁥⁥ а⁥⁥⁥u⁥⁥⁥t⁥⁥⁥і⁥⁥⁥ѕ⁥⁥⁥m", "All")
 ResetFilter()
     end
@@ -3107,18 +2364,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "Mind if you let me squish those titties",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Mind if you ӏеt mе ѕqυіѕһ tһοѕе tіttіеs", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "my condom fell off!",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("mу ⁥⁥⁥с⁥⁥⁥о⁥⁥⁥n⁥⁥⁥d⁥⁥⁥о⁥⁥⁥m fеӏӏ оff!", "All")
 ResetFilter()
     end
@@ -3127,18 +2380,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "Mr Breast is so cool",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Мr Вrеаѕt іѕ ѕо сооl", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "my cock is dirty",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("myсо⁥⁥⁥⁥⁥⁥⁥⁥⁥сkisdirty", "All")
 ResetFilter()
     end
@@ -3147,7 +2396,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "make me pregnant",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("mаkе mе рrеgnаnt", "All")
 ResetFilter()
     end
@@ -3156,7 +2404,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Naked boys",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Νаkеd Вοуѕ", "All")
 ResetFilter()
     end
@@ -3165,18 +2412,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "Naked girls",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Νаkеd Gіrӏѕ", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "pussy licker",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("р⁥⁥⁥u⁥⁥⁥⁥s⁥⁥sу ӏi⁥⁥с⁥⁥⁥k⁥⁥е⁥⁥⁥⁥⁥⁥r", "All")
 ResetFilter()
     end
@@ -3185,18 +2428,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "rape me",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("rареmе", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "spank me daddy",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕ⁥⁥⁥р⁥⁥⁥а⁥⁥⁥n⁥⁥⁥k⁥⁥⁥ ⁥⁥⁥m⁥⁥⁥е⁥⁥⁥ ⁥⁥⁥d⁥⁥⁥а⁥⁥⁥d⁥⁥⁥d⁥⁥⁥у", "All")
 ResetFilter()
     end
@@ -3205,7 +2444,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "sex slave",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕ⁥⁥⁥е⁥⁥⁥х⁥⁥⁥ ⁥⁥⁥ѕ⁥⁥⁥ӏ⁥⁥⁥а⁥⁥⁥v⁥⁥⁥е", "All")
 ResetFilter()
     end
@@ -3215,7 +2453,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Sweet cock dude",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ѕwееt сосk dudе", "All")
 ResetFilter()
     end
@@ -3224,18 +2461,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "smd hoe",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕmd һ⁥⁥⁥о⁥⁥⁥е", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "suck my cock",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕ⁥⁥⁥󠀕󠀕u⁥󠀕󠀕с⁥⁥⁥k󠀕m󠀕yс󠀕󠀕о⁥󠀕⁥⁥сk", "All")
 ResetFilter()
     end
@@ -3244,18 +2477,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "Sweet cock you got up there",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ѕwееtсо⁥⁥⁥⁥⁥⁥⁥⁥⁥сkуоugоtuрthеrе", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "shut the fuck up",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("s󠀕󠀕һ⁥⁥󠀕󠀕⁥⁥⁥⁥u󠀕󠀕tt⁥⁥󠀕󠀕⁥⁥⁥⁥һеf⁥⁥⁥󠀕󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥⁥⁥u⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥c⁥k󠀕󠀕u⁥⁥⁥⁥⁥⁥⁥⁥⁥р", "All")
 ResetFilter()
     end
@@ -3264,7 +2493,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Shut yo goofy ass up",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("S⁥⁥⁥һ⁥⁥⁥ut уоgо⁥⁥⁥о⁥⁥⁥f⁥⁥⁥у а⁥⁥⁥ѕ⁥⁥⁥ѕ u⁥⁥⁥p", "All")
 ResetFilter()
     end
@@ -3275,7 +2503,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "shut yo broke ass up",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("shutyobrokeаѕѕup", "All")
 ResetFilter()
     end
@@ -3284,7 +2511,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "suck my cock retard",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕuсkmyсосkret⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥аrd", "All")
 ResetFilter()
     end
@@ -3295,7 +2521,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "son of a bitch",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("sonofab󠀕󠀖󠀗󠀘￰￰󠀕󠀖󠀗󠀘і󠀕󠀖󠀗󠀘󠀕󠀖￰￰￰￰￰￰￰￰￰￰￰￰￰￰󠀗󠀘t󠀕￰￰￰￰￰￰￰󠀖󠀗󠀘󠀕󠀖󠀗󠀘с󠀗󠀘󠀗󠀘￰￰￰󠀗󠀘һ", "All")
 ResetFilter()
     end
@@ -3304,18 +2529,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "small penis",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("small рen⁥⁥⁥⁥⁥⁥⁥⁥iѕ", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "Theres cum everywhere!",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Т⁥⁥⁥h⁥⁥⁥е⁥⁥⁥r⁥⁥⁥е⁥⁥⁥ѕ ⁥⁥⁥с⁥⁥⁥⁥u⁥⁥⁥m⁥⁥⁥ ⁥⁥⁥е⁥⁥⁥v⁥⁥⁥е⁥⁥⁥r⁥⁥⁥у⁥⁥⁥w⁥⁥⁥h⁥⁥⁥е⁥⁥⁥r⁥⁥⁥е⁥⁥⁥!", "All")
 ResetFilter()
     end
@@ -3324,17 +2545,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "that bbc dont play",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("thаt b⁥⁥⁥b⁥⁥⁥с dоnt рlау", "All")
 ResetFilter()
     end
 })
 
-
   Tab:AddButton({
     Name = "ur gf was craving my raging schlong",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("u⁥⁥⁥r⁥⁥⁥ ⁥⁥⁥g⁥⁥⁥f⁥⁥⁥ ⁥⁥⁥w⁥⁥⁥а⁥⁥⁥ѕ⁥⁥⁥ ⁥⁥⁥с⁥⁥⁥r⁥⁥⁥а⁥⁥⁥v⁥⁥⁥і⁥⁥⁥n⁥⁥⁥g⁥⁥⁥ ⁥⁥⁥m⁥⁥⁥у⁥⁥⁥ ⁥⁥⁥r⁥⁥⁥а⁥⁥⁥g⁥⁥⁥і⁥⁥⁥n⁥⁥⁥g⁥⁥⁥ ⁥⁥⁥ѕ⁥⁥⁥с⁥⁥⁥h⁥⁥⁥ӏ⁥⁥⁥о⁥⁥⁥n⁥⁥⁥g", "All")
 ResetFilter()
     end
@@ -3343,7 +2561,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "ur moms booty is delicious",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ur mоmѕ bооtу іѕ dеlісіоuѕ", "All")
 ResetFilter()
     end
@@ -3352,7 +2569,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "wanna have sex?",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("wаnnа һаvе s⁥⁥⁥⁥ех?", "All")
 ResetFilter()
     end
@@ -3361,7 +2577,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "wsg bbg you lookin sexy",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("wѕg bbg уоu lооkіn ѕеху", "All")
 ResetFilter()
     end
@@ -3370,7 +2585,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "what the fuck",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("wha⁥⁥⁥⁥⁥⁥tt⁥⁥⁥⁥⁥⁥һеf⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥uс⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥k", "All")
 ResetFilter()
     end
@@ -3379,19 +2593,7 @@ ResetFilter()
   Tab:AddButton({
     Name = "wanna see some bbc",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("wаnnа ѕее ѕоmе b⁥⁥⁥b⁥⁥⁥с", "All")
-ResetFilter()
-    end
-})
-
-
-
-  Tab:AddButton({
-    Name = "you stupid nigger",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("y⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥o⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥ustu⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥pidn⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥і⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥ggеr", "All")
 ResetFilter()
     end
 })
@@ -3399,7 +2601,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "you like to rape and suck black oiled up men",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("уоu lіkе tо rаре аnd ѕuсk blасk оіlеd uр mеn", "All")
 ResetFilter()
     end
@@ -3410,7 +2611,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "yo my shaft is hard, mind jerking it?",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("уо mу ѕhаft іѕ һаrd, mіnd јеrkіng іt?", "All")
 ResetFilter()
     end
@@ -3419,18 +2619,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "you're such a whore",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("у⁥⁥⁥о⁥⁥⁥u⁥⁥⁥'r⁥⁥⁥е⁥⁥⁥⁥⁥⁥ѕ⁥⁥⁥u⁥⁥⁥с⁥⁥⁥һ⁥⁥⁥⁥⁥⁥а⁥⁥⁥⁥⁥⁥w⁥⁥⁥һ⁥⁥⁥о⁥⁥⁥r⁥⁥⁥е", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "you're a pedophile",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("у⁥⁥⁥о⁥⁥⁥u⁥⁥⁥'⁥⁥⁥r⁥⁥⁥е⁥⁥⁥ ⁥⁥⁥а⁥⁥⁥ p⁥⁥е⁥⁥⁥d⁥⁥⁥⁥⁥⁥⁥ор⁥⁥hіӏ⁥⁥⁥⁥⁥⁥⁥е", "All")
 ResetFilter()
     end
@@ -3439,7 +2635,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "you pathetic slut",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("youpatheticsӏut", "All")
 ResetFilter()
     end
@@ -3448,7 +2643,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "you're a pussy",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("уоu'rе а рu⁥⁥⁥ssу", "All")
 ResetFilter()
     end
@@ -3457,7 +2651,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "you're so sexy",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("уоu'rе ѕо ѕеху", "All")
 ResetFilter()
     end
@@ -3470,7 +2663,6 @@ local Section = Tab:AddSection({
   Tab:AddButton({
     Name = "BE MY WIFE!",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ВΕ МΥ WIFΕ!", "All")
 ResetFilter()
     end
@@ -3479,7 +2671,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BIG BOOTY LATINAS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ВІG ВООТΥ LАТІΝАЅ", "All")
 ResetFilter()
     end
@@ -3488,7 +2679,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BIG BOOTY ASIANS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ВІG ВООТΥ АЅІАΝЅ", "All")
 ResetFilter()
     end
@@ -3497,18 +2687,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "BIG BOOTY FEMBOYS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ВІG ВООТΥ FЕМВОΥЅ", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "BIG BOOTY",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ВІG ВООТΥ", "All")
 ResetFilter()
     end
@@ -3517,7 +2703,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "BIG BOOBS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("BIG ВООВS", "All")
 ResetFilter()
     end
@@ -3527,7 +2712,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "CAN I PISS INSIDE YOUR BUTTHOLE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С⁥⁥⁥⁥⁥АN І Р⁥⁥⁥⁥ІЅЅ ІNЅIDE YOU⁥⁥⁥R В⁥⁥⁥U⁥⁥⁥⁥ТТ⁥⁥⁥⁥НOLЕ?", "All")
 ResetFilter()
     end
@@ -3536,7 +2720,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "CAN I PISS ON YOU?",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С⁥⁥⁥⁥⁥АNІР⁥⁥⁥⁥ІЅЅONYOU?", "All")
 ResetFilter()
     end
@@ -3547,7 +2730,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "COCK IN BEDROOM",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("СОСKI⁥⁥⁥NBEDROOM", "All")
 ResetFilter()
     end
@@ -3556,7 +2738,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "CUM ON ME",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("СUМОΝМЕ", "All")
 ResetFilter()
     end
@@ -3565,7 +2746,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "CUM ON MY FACE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("С￰￰￰UМONМΥFА⁥⁥⁥⁥⁥⁥⁥⁥СЕ", "All")
 ResetFilter()
     end
@@ -3574,7 +2754,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "DO YOU HAVE TITS?",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("DО ΥОU НАVЕ Т⁥⁥⁥І⁥⁥⁥Т⁥⁥⁥Ѕ?", "All")
 ResetFilter()
     end
@@ -3583,7 +2762,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "EAT PUSSY BITCH",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("EATР⁥⁥⁥U⁥⁥⁥Ѕ⁥⁥⁥Ѕ⁥⁥⁥YВІ⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥TСH", "All")
 ResetFilter()
     end
@@ -3592,7 +2770,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "FATASS HOE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("F⁥⁥⁥АТАЅ⁥⁥Ѕ НОЕ", "All")
 ResetFilter()
     end
@@ -3601,7 +2778,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "FAT ASS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("F⁥⁥⁥А⁥⁥⁥ТА⁥⁥⁥Ѕ⁥⁥⁥Ѕ", "All")
 ResetFilter()
     end
@@ -3610,7 +2786,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "FREE HENTAI",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("FRЕЕ НЕ⁥⁥⁥⁥Ν⁥ТАӀ", "All")
 ResetFilter()
     end
@@ -3619,7 +2794,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "FUCK YOU",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("F⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥UСΚΥОU", "All")
 ResetFilter()
     end
@@ -3628,18 +2802,14 @@ ResetFilter()
   Tab:AddButton({
     Name = "HELP! THERE'S A COCK IN MY ASS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("H⁥⁥⁥Е⁥⁥⁥L⁥⁥⁥P⁥⁥⁥!⁥⁥⁥ T⁥⁥⁥H⁥⁥⁥Е⁥⁥⁥R⁥⁥⁥Е⁥⁥⁥'⁥⁥⁥S⁥⁥⁥ А⁥⁥⁥ С⁥⁥⁥О⁥⁥⁥C⁥⁥⁥K⁥⁥⁥ I⁥⁥⁥N⁥⁥⁥ М⁥⁥⁥Y⁥⁥⁥ А⁥⁥⁥⁥Ѕ⁥⁥⁥Ѕ", "All")
 ResetFilter()
     end
 })
 
-
-
   Tab:AddButton({
     Name = "HELP! THERE'S A HOE CHASING ME",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("НЕLР! ТНЕRЕS А НОЕ СНАSING МЕ", "All")
 ResetFilter()
     end
@@ -3648,7 +2818,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "I AM ABOUT TO CUM",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("IА󠀕󠀖󠀗МАВ󠀕󠀖󠀗OU￰￰￰TT󠀕󠀖󠀗OС￰󠀕󠀖󠀗󠀕󠀖󠀗￰￰U￰￰￰М", "All")
 ResetFilter()
     end
@@ -3657,7 +2826,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "I EAT PUSSY",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ӏ ЕАТ РUЅЅҮ", "All")
 ResetFilter()
     end
@@ -3666,7 +2834,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "I PREFER PUSSY",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("I⁥⁥⁥⁥⁥⁥⁥⁥ P⁥⁥⁥⁥⁥⁥⁥⁥R⁥⁥⁥⁥⁥⁥⁥⁥E⁥⁥⁥⁥⁥⁥⁥⁥F⁥⁥⁥⁥⁥⁥⁥⁥E⁥⁥⁥⁥⁥⁥⁥⁥R⁥ Р⁥⁥UЅ⁥⁥Ѕ⁥⁥Ү⁥", "All")
 ResetFilter()
     end
@@ -3676,7 +2843,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "I HAVE A MASSIVE COCK",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("I HAVE A MASSIVE СОСK", "All")
 ResetFilter()
     end
@@ -3685,7 +2851,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "I HAD AWESOME SEX WITH UR MOM!!!!",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("I Н⁥⁥⁥А⁥⁥⁥⁥D А⁥⁥⁥W⁥⁥⁥⁥ЕS⁥⁥⁥⁥⁥ОМ⁥⁥⁥Е⁥⁥⁥ S⁥⁥⁥Е⁥⁥⁥⁥Х⁥⁥ W⁥⁥⁥I⁥⁥Т⁥⁥⁥⁥Н U⁥⁥⁥R М⁥⁥⁥⁥⁥О⁥⁥⁥⁥М!!!!", "All")
 ResetFilter()
     end
@@ -3694,7 +2859,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "ILL MAKE YOU PREGNANT",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ILL МΑKΕ ΥОU РRΕGΝΑΝТ", "All")
 ResetFilter()
     end
@@ -3703,7 +2867,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "LET ME SQUICH THOSE TITTIES",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("LЕТМЕЅQUІЅНТНОЅЕТІТТІЕЅ", "All")
 ResetFilter()
     end
@@ -3712,7 +2875,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "LETS HAVE SEX",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("L⁥⁥⁥Е⁥⁥⁥Т⁥⁥⁥Ѕ⁥⁥⁥ ⁥⁥⁥Н⁥⁥⁥А⁥⁥⁥V⁥⁥⁥Е⁥⁥⁥ ⁥⁥⁥Ѕ⁥⁥⁥Е⁥⁥⁥Х", "All")
 ResetFilter()
     end
@@ -3721,7 +2883,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "LET'S FUCK",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("LET'SF￰￰￰￰￰￰UС￰￰￰￰￰￰￰￰Κ", "All")
 ResetFilter()
     end
@@ -3730,7 +2891,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "MY CONDOM FELL OFF!",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("МΥ С⁥⁥⁥О⁥⁥⁥Ν⁥⁥⁥D⁥⁥⁥О⁥⁥⁥М FЕLL ОFF!", "All")
 ResetFilter()
     end
@@ -3739,7 +2899,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "NAKED GIRLS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ΝΑKΕDGIRLЅ", "All")
 ResetFilter()
     end
@@ -3748,7 +2907,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "NAKED BOYS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ΝАΚЕD ВОΥЅ", "All")
 ResetFilter()
     end
@@ -3757,7 +2915,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "oh my god, not this DUMBASS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("oh my god, not this DUМВ АЅЅ", "All")
 ResetFilter()
     end
@@ -3766,7 +2923,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "PUT YOUR COCK IN MY ASS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("РUТΥ￰￰￰ОU￰￰RСО⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥СKINMY А￰￰￰Ѕ￰￰￰Ѕ", "All")
 ResetFilter()
     end
@@ -3775,7 +2931,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "STRAIGHT POWER MOTHERFUCKERS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("STRAIGHTPOWERM￰￰￰￰￰O￰￰￰￰￰T￰￰￰￰￰H￰￰￰￰￰E￰￰￰￰￰R￰￰￰￰￰F￰￰￰￰￰￰UС￰￰￰￰￰￰￰￰Κ￰￰￰￰￰￰￰￰E￰￰￰￰￰￰￰RS", "All")
 ResetFilter()
     end
@@ -3784,7 +2939,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "SUCK MY COCK",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("S󠀕󠀖󠀗UС󠀕󠀖󠀗KМ󠀕󠀖󠀗ΥС󠀕󠀖󠀗O⁥⁥⁥⁥⁥⁥󠀕󠀖󠀗󠀕󠀖󠀗⁥⁥⁥⁥⁥СK", "All")
 ResetFilter()
     end
@@ -3793,7 +2947,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "SHUT THE FUCK UP",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("SHUTTHEF￰￰￰￰￰￰UС￰￰￰￰￰￰￰￰ΚUР", "All")
 ResetFilter()
     end
@@ -3802,8 +2955,7 @@ ResetFilter()
   Tab:AddButton({
     Name = "SHUT UP FAGGOT",
     Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("SH⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥UTUPF⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥AGGOT", "All")
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥󠀕󠀖󠀗󠀕󠀖⁥⁥⁥S󠀕󠀖󠀗󠀕󠀖H⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥UTU⁥⁥PF⁥⁥⁥⁥󠀕󠀖󠀗󠀕󠀖⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥A⁥⁥G󠀕󠀖󠀗󠀕󠀖󠀗⁥⁥⁥⁥GO⁥⁥T", "All")
 ResetFilter()
     end
 })
@@ -3811,7 +2963,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "SHUT UP CUNT",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("SHUTUPCU⁥⁥⁥⁥⁥⁥⁥⁥⁥NТ", "All")
 ResetFilter()
     end
@@ -3820,7 +2971,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "SHUT UP HOE",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("SНUT UP НОЕ", "All")
 ResetFilter()
     end
@@ -3829,7 +2979,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "SHAKE THAT ASS",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ЅHAKEТН⁥⁥⁥⁥⁥⁥⁥⁥АТА￰￰￰Ѕ￰￰￰Ѕ", "All")
 ResetFilter()
     end
@@ -3838,8 +2987,7 @@ ResetFilter()
   Tab:AddButton({
     Name = "SON OF A BITCH",
     Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ЅO󠀖󠀗⁥⁥⁥⁥⁥⁥⁥󠀘󠀕󠀖NO󠀖󠀗󠀘󠀕󠀖FA󠀗󠀘󠀕󠀖В￰￰￰￰󠀗󠀘󠀕󠀖￰￰￰I￰󠀗󠀘󠀕󠀖￰￰￰￰￰TC󠀗󠀘󠀕󠀖H", "All")
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("⁥⁥⁥⁥Ѕ⁥⁥⁥⁥O󠀖󠀗⁥⁥⁥⁥⁥⁥⁥󠀘󠀕󠀖NO󠀖⁥⁥⁥⁥󠀗󠀘⁥⁥⁥⁥󠀕󠀖FA󠀗󠀘⁥⁥⁥⁥󠀕󠀖В￰￰⁥⁥⁥⁥￰￰󠀗⁥⁥⁥⁥󠀘󠀕󠀖￰￰￰I￰󠀗󠀘󠀕󠀖⁥⁥⁥⁥￰￰￰￰￰T⁥⁥⁥⁥C󠀗⁥⁥⁥⁥󠀘󠀕󠀖H", "All")
 ResetFilter()
     end
 })
@@ -3847,7 +2995,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "SHIT NOOOOOOOO",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ѕ⁥⁥⁥⁥Н⁥⁥⁥⁥Ι⁥⁥⁥⁥Т⁥⁥⁥⁥ Ν⁥⁥⁥⁥О⁥⁥⁥⁥О⁥⁥⁥⁥О⁥⁥⁥⁥О⁥⁥⁥⁥О⁥⁥⁥⁥О⁥⁥⁥⁥О⁥⁥⁥⁥", "All")
 ResetFilter()
     end
@@ -3856,7 +3003,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "YOU ARE SO ASS AT THIS GAME",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ΥОUАRЕЅО А￰￰￰Ѕ￰￰￰Ѕ АТTHIЅGАМЕ", "All")
 ResetFilter()
     end
@@ -3875,7 +3021,6 @@ local Section = Tab:AddSection({
   Tab:AddButton({
     Name = "аh уеѕ~ *moans* уеѕ һаrdеr~",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("аh уеѕ~ *m⁥⁥⁥о⁥⁥⁥а⁥⁥⁥n⁥⁥⁥ѕ* уеѕ һаrdеr~", "All")
 ResetFilter()
     end
@@ -3884,7 +3029,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "*bites your cock*",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("*bіtеѕуоurсосk*", "All")
 ResetFilter()
     end
@@ -3893,7 +3037,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "*cums*",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("*с⁥⁥⁥⁥umѕ*", "All")
 ResetFilter()
     end
@@ -3902,7 +3045,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "*looks under skirt* wow nice balls bro",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("*ӏооkѕ undеr ѕkіrt* wоw nісе bаlӏѕ brо", "All")
 ResetFilter()
     end
@@ -3911,7 +3053,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "*masturbates*",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("*ma⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕⁥⁥⁥st⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕⁥⁥⁥ur󠀕󠀕b󠀕󠀕a󠀕󠀕t󠀕󠀕e󠀕󠀕s*", "All")
 ResetFilter()
     end
@@ -3920,7 +3061,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "*moans*",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("*mоаns*", "All")
 ResetFilter()
     end
@@ -3929,7 +3069,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "nice balls *slaps them*",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("*nісеbаӏӏѕ*sӏарstһеm*", "All")
 ResetFilter()
     end
@@ -3938,7 +3077,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "*rapes*",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("r ареs*", "All")
 ResetFilter()
     end
@@ -3947,7 +3085,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "*sucks cock*",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("*ѕuсkѕ сосk*", "All")
 ResetFilter()
     end
@@ -3956,7 +3093,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "*shits*",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("*⁥⁥⁥ѕ⁥⁥⁥һ⁥⁥⁥i⁥⁥⁥tѕ*", "All")
 ResetFilter()
 end
@@ -3975,7 +3111,6 @@ local Section = Tab:AddSection({
   Tab:AddButton({
     Name = "Are we going to teach about the pussy hole?",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Аrеwеgоіngtоtеacһаbоuttһeрuѕѕуһolе?", "All")
 ResetFilter()
     end
@@ -3985,7 +3120,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "cock and ball torture sex",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("с⁥⁥⁥о⁥⁥󠀕󠀕󠀕⁥с⁥⁥⁥kаndb󠀕󠀕󠀕а⁥⁥⁥⁥lltor󠀕󠀕󠀕turеѕ󠀕󠀕󠀕⁥⁥⁥е⁥⁥⁥х", "All")
 ResetFilter()
     end
@@ -3994,7 +3128,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "E-Rape",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Е-Rаре", "All")
 ResetFilter()
     end
@@ -4003,17 +3136,7 @@ ResetFilter()
   Tab:AddButton({
     Name = "eat my shit nigger",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ea⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥tm⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥yѕ⁥⁥⁥⁥⁥⁥h⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥і⁥⁥⁥⁥⁥⁥tn⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥і⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥g⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥ge⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥r", "All")
-ResetFilter()
-    end
-})
-
-  Tab:AddButton({
-    Name = "#fuckblm",
-    Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("#f⁥⁥⁥⁥u⁥⁥⁥󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕󠀕сk⁥⁥⁥⁥󠀗󠀕bӏ󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗󠀕󠀕󠀕󠀕m", "All")
 ResetFilter()
     end
 })
@@ -4021,7 +3144,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "im very horny and i will cum inside you hard",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("im very һоrn⁥⁥⁥⁥⁥⁥yandiwill с⁥⁥⁥⁥⁥⁥u⁥⁥⁥⁥⁥⁥mi⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥nsidеyou hard", "All")
 ResetFilter()
     end
@@ -4030,8 +3152,15 @@ ResetFilter()
   Tab:AddButton({
     Name = "I'm gonna fucking rape you",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Ӏ'mgо󠀕󠀕󠀕⁥⁥⁥⁥⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀕nnаf⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥uсkіngr⁥⁥⁥а⁥⁥⁥p⁥⁥⁥ey⁥⁥⁥о⁥⁥⁥u ", "All")
+ResetFilter()
+    end
+})
+
+  Tab:AddButton({
+    Name = "i'm gonna fuck you hard",
+    Callback = function()
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("i'mgоnnаf⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥uсkуоurһоӏеһаrd", "All")
 ResetFilter()
     end
 })
@@ -4039,7 +3168,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "i fuck children",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("іf⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥uсkсһіІdrеn", "All")
 ResetFilter()
     end
@@ -4048,7 +3176,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "murder the lgbtq+",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("m⁥⁥⁥⁥⁥⁥ur⁥⁥⁥⁥⁥⁥dеrthеӏg⁥⁥⁥⁥⁥⁥b⁥⁥⁥⁥⁥⁥t⁥⁥⁥⁥⁥⁥q+", "All")
 ResetFilter()
     end
@@ -4057,7 +3184,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "shitass",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ѕһ⁥⁥⁥⁥󠀗󠀕󠀕󠀕󠀕󠀖i⁥⁥⁥⁥󠀗󠀕󠀕󠀕tаѕѕ", "All")
 ResetFilter()
     end
@@ -4078,7 +3204,6 @@ local Section = Tab:AddSection({
   Tab:AddButton({
     Name = "blacked.com",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("blacked.c⁥⁥⁥о⁥⁥⁥m", "All")
 ResetFilter()
     end
@@ -4087,7 +3212,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "pornhub.com",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("р⁥⁥⁥о⁥⁥⁥r⁥⁥⁥n⁥⁥⁥һ⁥⁥⁥u⁥⁥⁥b.c⁥⁥⁥о⁥⁥⁥m", "All")
 ResetFilter()
     end
@@ -4096,7 +3220,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "rule34.xxx",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("r⁥⁥⁥u⁥⁥⁥ӏ⁥⁥⁥е3⁥⁥⁥4.ххх", "All")
 ResetFilter()
     end
@@ -4105,7 +3228,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "e621.net",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("е⁥⁥⁥6⁥⁥⁥2⁥⁥⁥1⁥⁥⁥.n⁥⁥⁥е⁥⁥⁥t", "All")
 ResetFilter()
     end
@@ -4114,7 +3236,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "xvideos.com",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("х󠀗󠀕󠀕󠀕󠀕󠀕󠀖󠀖󠀗vid⁥⁥⁥⁥е⁥⁥⁥⁥o󠀗󠀕󠀕󠀕󠀕ѕ.с⁥⁥⁥⁥om", "All")
 ResetFilter()
     end
@@ -4123,7 +3244,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "PORNHUB.COM",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Р⁥⁥⁥О⁥⁥⁥R⁥⁥⁥Ν⁥⁥⁥Н⁥⁥⁥U⁥⁥⁥В.С⁥⁥⁥О⁥⁥⁥М⁥⁥⁥", "All")
 ResetFilter()
     end
@@ -4132,7 +3252,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "XVIDEOS.COM",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Х󠀕󠀕󠀕󠀕⁥⁥⁥⁥⁥⁥󠀕󠀕󠀕󠀖󠀕VӀ⁥⁥⁥⁥⁥⁥D⁥⁥⁥󠀕󠀕󠀕Е⁥⁥⁥󠀕󠀕󠀕ОЅ.С⁥⁥⁥󠀕󠀕󠀕ОМ", "All")
 ResetFilter()
     end
@@ -4145,7 +3264,6 @@ local Section = Tab:AddSection({
   Tab:AddButton({
     Name = "https://blacked.com",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("httрs:/⁥⁥⁥/blacked.c⁥⁥⁥о⁥⁥⁥m", "All")
 ResetFilter()
     end
@@ -4154,7 +3272,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "https://pornhub.com",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ht󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗tps󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗:/󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗/⁥⁥⁥p󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗or󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗nh󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗ub󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗.󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗c󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗󠀘󠀕󠀖󠀗om", "All")
 ResetFilter()
     end
@@ -4163,7 +3280,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "MASTURBATING TO HTTPS://PORNHUB.COM",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("МА⁥⁥⁥󠀕󠀖⁥Ѕ⁥⁥⁥󠀕󠀖⁥⁥⁥⁥⁥⁥⁥⁥⁥Т⁥⁥⁥󠀕󠀖⁥UR⁥ВАТӀΝGTOHТ󠀕󠀕󠀕󠀕ТРЅ󠀕󠀕󠀕󠀕:/⁥⁥⁥/РО󠀕󠀕RΝ󠀕󠀕НU⁥⁥⁥⁥В.C⁥⁥⁥OM", "All")
 ResetFilter()
     end
@@ -4184,8 +3300,7 @@ Tab:AddParagraph("Note","'NOT LEGIT' on this script means that the bypasses DON'
   Tab:AddButton({
     Name = "a hard r",
     Callback = function()
-ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("п⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥i󠀕g⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥g󠀕󠀕е󠀕г", "All")
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("󠀕󠀕п⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥і󠀕g⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥g󠀕󠀕e󠀕󠀕󠀕󠀕󠀕⁥⁥⁥⁥⁥⁥⁥⁥⁥⁥г", "All")
 ResetFilter()
     end
 })
@@ -4193,8 +3308,15 @@ ResetFilter()
   Tab:AddButton({
     Name = "a lil n word",
     Callback = function()
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("n⁥iɡ⁥ɡ⁥а", "All")
 ResetFilter()
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("п⁥iɡ⁥ɡ ⁥а", "All")
+    end
+})
+
+  Tab:AddButton({
+    Name = "faggot",
+    Callback = function()
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("󠀕￰￰￰￰￰￰󠀕￰￰￰￰󠀕f󠀕￰￰￰󠀕󠀕󠀕󠀕󠀕￰￰￰￰￰￰󠀕󠀕󠀕󠀕󠀕￰￰￰󠀕⁥а￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰󠀕󠀕⁥ġ￰󠀕󠀕󠀕￰￰￰￰￰￰￰￰󠀕󠀕￰￰󠀕⁥ġ￰￰￰￰￰󠀕￰￰￰￰￰￰￰￰󠀕￰￰￰￰￰￰￰￰￰󠀕󠀕о󠀕󠀕󠀕￰￰￰￰￰￰￰￰￰￰￰￰￰￰￰󠀕󠀕󠀕t￰￰￰", "All")
 ResetFilter()
     end
 })
@@ -4202,7 +3324,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "fuck",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("f￰￰￰￰￰󠀕󠀕￰￰￰￰￰ụç󠀕󠀕ķ", "All")
 ResetFilter()
     end
@@ -4211,7 +3332,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "KKK",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("ККК", "All")
 ResetFilter()
     end
@@ -4220,7 +3340,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "KYS BITCH",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("К⁥⁥⁥⁥⁥⁥⁥⁥Υ⁥⁥⁥SВ￰￰￰￰￰￰￰I￰￰￰￰￰￰Т￰￰￰￰￰￰СН", "All")
 ResetFilter()
     end
@@ -4239,7 +3358,6 @@ local Section = Tab:AddSection({
   Tab:AddButton({
     Name = "Chat a huge annoying blank text chat bubble",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("                                                                                                                                                                                                       ⁥", "All")
 ResetFilter()
     end
@@ -4248,7 +3366,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Chat a long annoying blank text chat bubble",
     Callback = function()
-ResetFilter()
 loadstring(game:HttpGet("https://pastebin.com/raw/WPHVj8Lj"))()
 ResetFilter()
     end
@@ -4257,7 +3374,6 @@ ResetFilter()
   Tab:AddButton({
     Name = "Chat our dsc link",
     Callback = function()
-ResetFilter()
 game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("httрs:/⁥⁥⁥/dѕс⁥⁥⁥.⁥⁥⁥g⁥⁥⁥g/⁥⁥⁥vadriftz", "All")
 ResetFilter()
     end
@@ -4340,10 +3456,20 @@ local function teleportToPlayer(targetPlayer)
     end
 end
 
+local function findPlayer(name)
+    local lowerName = string.lower(name)
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if string.find(string.lower(player.Name), lowerName) or string.find(string.lower(player.DisplayName), lowerName) then
+            return player
+        end
+    end
+    return nil
+end
+
 Section:AddButton({
     Name = "Teleport",
     Callback = function()
-        local targetPlayer = game.Players:FindFirstChild(playerName)
+        local targetPlayer = findPlayer(playerName)
         if targetPlayer then
             teleportToPlayer(targetPlayer)
         else
@@ -4357,14 +3483,55 @@ Section:AddButton({
     end
 })
 
-Tab:AddParagraph("NOTE","You MUST enter a players FULL USERNAME (display names dont work, and you cant type in half of the user")
-
 local Section = Tab:AddSection({
     Name = "Player Scripts"
 })
 
 local infiniteJumpEnabled = false
 local infiniteJumpConnection
+
+local noclipEnabled = false
+local Noclip = nil
+local Clip = nil
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+local function noclip()
+    Clip = false
+    local function Nocl()
+        if Clip == false and character ~= nil then
+            for _,v in pairs(character:GetDescendants()) do
+                if v:IsA('BasePart') and v.CanCollide then
+                    v.CanCollide = false
+                end
+            end
+        end
+        wait(0.21)
+    end
+    Noclip = game:GetService('RunService').Stepped:Connect(Nocl)
+end
+
+local function clip()
+    if Noclip then Noclip:Disconnect() end
+    Clip = true
+end
+
+local function toggleNoclip(state)
+    noclipEnabled = state
+    if noclipEnabled then
+        noclip()
+    else
+        clip()
+    end
+end
+
+Tab:AddToggle({
+  Name = "Noclip",
+  Default = false,
+  Callback = function(state)
+      toggleNoclip(state)
+  end    
+})
 
 Tab:AddToggle({
     Name = "Infinite Jump",
@@ -4424,44 +3591,81 @@ Tab:AddSlider({
   end    
 })
 
+getgenv().esp = false
+getgenv().teamcheck = false
+getgenv().Color = Color3.fromRGB(255, 0, 0)
 Tab:AddToggle({
-    Name = "ESP (see people)",
-    Default = false,
-    Callback = function(Value)
-        if Value then
-            loadstring(game:HttpGet('https://raw.githubusercontent.com/Lucasfin000/SpaceHub/main/UESP'))()
-        end
-    end
+	Name = "ESP",
+	Default = false,
+	Callback = function(Value)
+		getgenv().esp = Value
+		spawn(function()
+		while wait() do
+		    if not getgenv().esp then
+		          for i,v in pairs(game.Players:GetChildren()) do
+		              if v.Character and v.Character:FindFirstChild("Highlight") then
+		                  local Highlight = v.Character:FindFirstChild("Highlight")
+		                  Highlight.Enabled = false
+    		      end
+		      end 
+		      else
+		          for i,v in pairs(game.Players:GetChildren()) do
+		             if getgenv().teamcheck == true then
+		               if v.Character and v ~= game.Players.LocalPlayer and v.TeamColor ~= game.Players.LocalPlayer.TeamColor then
+    		                 if v.Character:FindFirstChild("Highlight") then
+    		                 local Highlight = v.Character:FindFirstChild("Highlight") 
+    		                 Highlight.Enabled = true
+    		                 Highlight.FillColor = getgenv().Color
+    		                 Highlight.Adornee = v.Character
+    		                 else
+    		                 local Highlight = Instance.new("Highlight",v.Character)
+    		                 Highlight.Enabled = true
+    		                 Highlight.FillColor = getgenv().Color
+    		                 Highlight.Adornee = v.Character
+    		              end       
+    		           end  
+		                if v.TeamColor == game.Players.LocalPlayer.TeamColor then
+    		              if v.Character and v.Character:FindFirstChild("Highlight") then
+    		                  local Highlight = v.Character:FindFirstChild("Highlight")
+        		              Highlight.Enabled = false
+        		          end    
+    		            end 
+    		          else
+    		              if v.Character and v ~= game.Players.LocalPlayer then
+    		                 if v.Character:FindFirstChild("Highlight") then
+    		                 local Highlight = v.Character:FindFirstChild("Highlight") 
+    		                 Highlight.Enabled = true
+    		                 Highlight.FillColor = getgenv().Color
+    		                 Highlight.Adornee = v.Character
+    		                 else
+    		                 local Highlight = Instance.new("Highlight",v.Character)
+    		                 Highlight.Enabled = true
+    		                 Highlight.FillColor = getgenv().Color
+    		                 Highlight.Adornee = v.Character
+    		              end       
+    		           end    
+		            end       
+		      end    
+		    end  
+		end    
+		end)
+	end    
+})
+
+Tab:AddColorpicker({
+	Name = "Esp Color",
+	Default = Color3.fromRGB(255, 0, 0),
+	Callback = function(Value)
+		getgenv().Color = Value
+	end	  
 })
 
 Tab:AddToggle({
-    Name = "Anti-Fling",
-    Default = false,
-    Callback = function(Value)
-        if Value then
-            local Players = game:GetService("Players")
-            local RunService = game:GetService("RunService")
-            local Player = Players.LocalPlayer
-
-            RunService.Stepped:Connect(function()
-                for _, CoPlayer in pairs(Players:GetChildren()) do
-                    if CoPlayer ~= Player and CoPlayer.Character then
-                        for _, Part in pairs(CoPlayer.Character:GetChildren()) do
-                            if Part.Name == "HumanoidRootPart" then
-                                Part.CanCollide = false
-                            end
-                        end
-                    end
-                end
-
-                for _, Accessory in pairs(workspace:GetChildren()) do
-                    if Accessory:IsA("Accessory") and Accessory:FindFirstChildWhichIsA("Part") then
-                        Accessory:FindFirstChildWhichIsA("Part"):Destroy()
-                    end
-                end
-            end)
-        end
-    end
+	Name = "Teamcheck",
+	Default = false,
+	Callback = function(Value)
+		getgenv().teamcheck = Value
+	end    
 })
 
 local Section = Tab:AddSection({
