@@ -1,1 +1,82 @@
-ben
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({ Name = "vadrifts.byp | V1.4.0", HidePremium = false, SaveConfig = false, ConfigFolder = "OrionTest", IntroEnabled = false })
+
+local Tab = Window:MakeTab({
+    Name = "Home",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+local Section = Tab:AddSection({
+    Name = "Chat Filter"
+})
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
+local IsLegacy = (TextChatService.ChatVersion == Enum.ChatVersion.LegacyChatService)
+local ChatRemote = ReplicatedStorage:FindFirstChild("SayMessageRequest", true)
+local Channel = not IsLegacy and TextChatService.TextChannels.RBXGeneral
+
+local function checkForTag(message)
+    local success, isTagged = pcall(function()
+        return game:GetService("Chat"):FilterStringForBroadcast(message, game.Players.LocalPlayer)
+    end)
+    return success and isTagged ~= message
+end
+
+local function sendMessage(message)
+    if checkForTag(message) then
+        OrionLib:MakeNotification({
+            Name = "Tag Detection",
+            Content = "This message might be patched! Try clicking 'Fix Bypasses' and try again!",
+            Duration = 5
+        })
+    else
+        if IsLegacy then
+            -- Send message using Legacy chat system
+            local success, err = pcall(function()
+                ChatRemote:FireServer(message, "All")
+            end)
+            if not success then
+                OrionLib:MakeNotification({
+                    Name = "Error",
+                    Content = "Failed to send message via Legacy chat system: " .. err,
+                    Duration = 5
+                })
+            end
+        else
+            -- Send message using TextChatService
+            local success, err = pcall(function()
+                Channel:SendAsync(message)
+            end)
+            if not success then
+                OrionLib:MakeNotification({
+                    Name = "Error",
+                    Content = "Failed to send message via TextChatService: " .. err,
+                    Duration = 5
+                })
+            end
+        end
+    end
+end
+
+Tab:AddButton({
+    Name = "Send 'fuck'",
+    Callback = function()
+        sendMessage("fuck")
+    end
+})
+
+Tab:AddButton({
+    Name = "Send 'ben'",
+    Callback = function()
+        sendMessage("ben")
+    end
+})
+
+Tab:AddButton({
+    Name = "Send 'Vagina'",
+    Callback = function()
+        sendMessage("Vagіna")
+    end
+})
