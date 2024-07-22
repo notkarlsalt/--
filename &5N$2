@@ -1,4 +1,3 @@
-
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 local Window = OrionLib:MakeWindow({ Name = "vadrifts.byp |  V1.4.0", HidePremium = false, SaveConfig = false, ConfigFolder = "OrionTest", IntroEnabled = false })
 
@@ -11,6 +10,10 @@ local Tab = Window:MakeTab({
 local Section = Tab:AddSection({
     Name = "Chat Filter"
 })
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
+local IsLegacy = (TextChatService.ChatVersion == Enum.ChatVersion.LegacyChatService)
 
 local function checkForTag(message)
     local success, isTagged = pcall(function()
@@ -27,7 +30,11 @@ local function sendMessage(message)
             Duration = 5
         })
     else
-        game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
+        if IsLegacy then
+            game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
+        else
+            TextChatService.TextChannels.RBXGeneral:SendAsync(message)
+        end
     end
 end
 
@@ -51,16 +58,3 @@ Tab:AddButton({
         sendMessage("V󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕a󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕g󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕і󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕n󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕a")
     end
 })
-
-heres a script that might help:
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TextChatService = game:GetService("TextChatService")
-local IsLegacy = (TextChatService.ChatVersion == Enum.ChatVersion.LegacyChatService)
-local ChatRemote = ReplicatedStorage:FindFirstChild("SayMessageRequest", true)
-local Channel = not IsLegacy and TextChatService.TextChannels.RBXGeneral
-
-local Chat = function(Message)
-    if IsLegacy then
-game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Message", "All")
-    else
-game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync("Message")
