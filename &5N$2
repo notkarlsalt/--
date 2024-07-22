@@ -1,5 +1,6 @@
+
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-local Window = OrionLib:MakeWindow({ Name = "vadrifts.byp | V1.4.0", HidePremium = false, SaveConfig = false, ConfigFolder = "OrionTest", IntroEnabled = false })
+local Window = OrionLib:MakeWindow({ Name = "vadrifts.byp |  V1.4.0", HidePremium = false, SaveConfig = false, ConfigFolder = "OrionTest", IntroEnabled = false })
 
 local Tab = Window:MakeTab({
     Name = "Home",
@@ -10,12 +11,6 @@ local Tab = Window:MakeTab({
 local Section = Tab:AddSection({
     Name = "Chat Filter"
 })
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TextChatService = game:GetService("TextChatService")
-local IsLegacy = (TextChatService.ChatVersion == Enum.ChatVersion.LegacyChatService)
-local ChatRemote = ReplicatedStorage:FindFirstChild("SayMessageRequest", true)
-local Channel = not IsLegacy and TextChatService.TextChannels.RBXGeneral
 
 local function checkForTag(message)
     local success, isTagged = pcall(function()
@@ -32,31 +27,7 @@ local function sendMessage(message)
             Duration = 5
         })
     else
-        if IsLegacy then
-            -- Send message using Legacy chat system
-            local success, err = pcall(function()
-                ChatRemote:FireServer(message, "All")
-            end)
-            if not success then
-                OrionLib:MakeNotification({
-                    Name = "Error",
-                    Content = "Failed to send message via Legacy chat system: " .. err,
-                    Duration = 5
-                })
-            end
-        else
-            -- Send message using TextChatService
-            local success, err = pcall(function()
-                Channel:SendAsync(message)
-            end)
-            if not success then
-                OrionLib:MakeNotification({
-                    Name = "Error",
-                    Content = "Failed to send message via TextChatService: " .. err,
-                    Duration = 5
-                })
-            end
-        end
+        game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
     end
 end
 
@@ -77,6 +48,19 @@ Tab:AddButton({
 Tab:AddButton({
     Name = "Send 'Vagina'",
     Callback = function()
-        sendMessage("Vagіna")
+        sendMessage("V󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕a󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕g󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕і󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕n󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀕󠀖󠀕a")
     end
 })
+
+heres a script that might help:
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
+local IsLegacy = (TextChatService.ChatVersion == Enum.ChatVersion.LegacyChatService)
+local ChatRemote = ReplicatedStorage:FindFirstChild("SayMessageRequest", true)
+local Channel = not IsLegacy and TextChatService.TextChannels.RBXGeneral
+
+local Chat = function(Message)
+    if IsLegacy then
+game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Message", "All")
+    else
+game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync("Message")
